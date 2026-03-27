@@ -1,0 +1,50 @@
+{
+  "name": "@copperline/rendex-mcp",
+  "version": "0.1.1",
+  "description": "MCP server for Rendex — capture screenshots of any webpage via AI agents",
+  "type": "module",
+  "bin": {
+    "rendex-mcp": "./dist/stdio.js"
+  },
+  "main": "./dist/server.js",
+  "types": "./dist/server.d.ts",
+  "exports": {
+    ".": "./dist/server.js",
+    "./stdio": "./dist/stdio.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "tsc"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "screenshot",
+    "rendex",
+    "ai-agent",
+    "claude",
+    "copperline"
+  ],
+  "author": "Copperline Labs LLC",
+  "license": "MIT",
+  "homepage": "https://rendex.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/copperline-labs/rendex-mcp"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "bun-types": "^1.3.0",
+    "typescript": "^5.7.0"
+  }
+}
