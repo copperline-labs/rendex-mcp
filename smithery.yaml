@@ -1,0 +1,18 @@
+startCommand:
+  type: stdio
+
+configSchema:
+  type: object
+  required:
+    - apiKey
+  properties:
+    apiKey:
+      type: string
+      description: Rendex API key from rendex.dev/dashboard/keys
+
+commandFunction: |-
+  config => ({
+    command: 'node',
+    args: ['dist/stdio.js'],
+    env: { RENDEX_API_KEY: config.apiKey }
+  })

@@ -1,5 +1,6 @@
 {
   "name": "@copperline/rendex-mcp",
+  "mcpName": "io.github.copperline-labs/rendex-mcp",
   "version": "0.1.1",
   "description": "MCP server for Rendex — capture screenshots of any webpage via AI agents",
   "type": "module",
