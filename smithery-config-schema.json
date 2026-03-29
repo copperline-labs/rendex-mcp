@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "required": ["apiKey"],
+  "properties": {
+    "apiKey": {
+      "type": "string",
+      "title": "Rendex API Key",
+      "description": "Get your free API key at https://rendex.dev (500 screenshots/month, no credit card)"
+    }
+  }
+}

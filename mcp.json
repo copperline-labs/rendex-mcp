@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "rendex": {
+      "command": "npx",
+      "args": ["-y", "@copperline/rendex-mcp"],
+      "env": {
+        "RENDEX_API_KEY": ""
+      }
+    }
+  }
+}
