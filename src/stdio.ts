@@ -33,3 +33,8 @@ main().catch((error) => {
   console.error("Fatal error:", error);
   process.exit(1);
 });
+
+// Smithery sandbox — allows registry to scan tools without real credentials
+export function createSandboxServer() {
+  return createRendexServer("sandbox-key");
+}
