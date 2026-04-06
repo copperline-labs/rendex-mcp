@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.copperline-labs/rendex-mcp",
   "title": "Rendex Screenshot",
-  "description": "Capture website screenshots as PNG/JPEG. Full-page, dark mode, ad blocking, custom viewports.",
-  "version": "0.1.1",
+  "description": "Capture website screenshots and PDFs. PNG/JPEG/WebP/PDF output, batch capture, geo-targeting, CSS/JS injection, async pipeline.",
+  "version": "1.0.0",
   "websiteUrl": "https://rendex.dev",
   "repository": {
     "url": "https://github.com/copperline-labs/rendex-mcp",
@@ -27,7 +27,7 @@
     {
       "registryType": "npm",
       "identifier": "@copperline/rendex-mcp",
-      "version": "0.1.1",
+      "version": "1.0.0",
       "transport": {
         "type": "stdio"
       },
