@@ -1,7 +1,7 @@
 {
   "name": "@copperline/rendex-mcp",
   "mcpName": "io.github.copperline-labs/rendex-mcp",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "MCP server for Rendex — capture screenshots of any webpage via AI agents",
   "type": "module",
   "bin": {
@@ -22,7 +22,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "tsc"
+    "prepublishOnly": "tsc",
+    "deploy": "wrangler deploy"
   },
   "keywords": [
     "mcp",
@@ -46,6 +47,7 @@
   },
   "devDependencies": {
     "bun-types": "^1.3.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "wrangler": "4.80.0"
   }
 }
