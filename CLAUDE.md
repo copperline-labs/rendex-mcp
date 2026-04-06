@@ -6,7 +6,7 @@
 
 ## Overview
 
-MCP server that wraps the Rendex REST API for AI agent consumption. Pure HTTP client — all auth, billing, and rate limiting happen at the API layer (api.rendex.dev).
+MCP server that wraps the Rendex REST API for AI agent consumption. Pure HTTP client — no direct dependency on Unkey, Supabase, or Stripe. All auth, billing, and rate limiting happen at the REST API layer (api.rendex.dev).
 
 ## Architecture
 
