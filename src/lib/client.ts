@@ -6,8 +6,9 @@ import type { RendexRestError } from "./errors.js";
 const API_BASE = "https://api.rendex.dev";
 
 export interface ScreenshotParams {
-  url: string;
-  format?: "png" | "jpeg";
+  url?: string;
+  html?: string;
+  format?: "png" | "jpeg" | "webp" | "pdf";
   width?: number;
   height?: number;
   fullPage?: boolean;
@@ -21,6 +22,29 @@ export interface ScreenshotParams {
   waitUntil?: "load" | "domcontentloaded" | "networkidle0" | "networkidle2";
   waitForSelector?: string;
   bestAttempt?: boolean;
+  selector?: string;
+  css?: string;
+  js?: string;
+  cookies?: Array<{
+    name: string;
+    value: string;
+    domain?: string;
+    path?: string;
+    httpOnly?: boolean;
+    secure?: boolean;
+    sameSite?: "Strict" | "Lax" | "None";
+    expires?: number;
+  }>;
+  headers?: Record<string, string>;
+  userAgent?: string;
+  pdfFormat?: "A4" | "Letter" | "Legal" | "Tabloid" | "A3";
+  pdfLandscape?: boolean;
+  pdfPrintBackground?: boolean;
+  pdfScale?: number;
+  pdfMargin?: { top?: string; right?: string; bottom?: string; left?: string };
+  async?: boolean;
+  webhookUrl?: string;
+  cacheTtl?: number;
 }
 
 export interface ScreenshotResponse {
