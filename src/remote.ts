@@ -16,7 +16,7 @@ export default {
     const url = new URL(request.url);
 
     // Health check
-    if (url.pathname === "/health" && request.method === "GET") {
+    if (url.pathname === "/health" && (request.method === "GET" || request.method === "HEAD")) {
       return new Response(JSON.stringify({ status: "ok", service: "rendex-mcp" }), {
         headers: { "Content-Type": "application/json" },
       });
@@ -24,6 +24,15 @@ export default {
 
     // MCP endpoint
     if (url.pathname === "/mcp") {
+      // Browser visit (GET without MCP headers) → redirect to docs
+      const accept = request.headers.get("accept") ?? "";
+      if (request.method === "GET" && !accept.includes("text/event-stream")) {
+        return new Response(null, {
+          status: 302,
+          headers: { Location: "https://rendex.dev/docs" },
+        });
+      }
+
       if (!env.RENDEX_API_KEY) {
         return new Response("Server misconfigured: missing API key", { status: 500 });
       }
@@ -40,14 +49,14 @@ export default {
     }
 
     // Root: info page
-    if (url.pathname === "/" && request.method === "GET") {
+    if (url.pathname === "/" && (request.method === "GET" || request.method === "HEAD")) {
       return new Response(
         JSON.stringify({
           name: "Rendex MCP Server",
           description: "Screenshot API for AI agents via Model Context Protocol",
           mcp_endpoint: "/mcp",
           docs: "https://rendex.dev",
-          version: "0.1.1",
+          version: "1.0.0",
         }),
         {
           headers: { "Content-Type": "application/json" },
