@@ -9,7 +9,7 @@ import {
   handleScreenshot,
 } from "./tools/index.js";
 
-const VERSION = "0.1.1";
+const VERSION = "1.0.0";
 
 export function createRendexServer(apiKey: string, baseUrl?: string) {
   const client = new RendexClient(apiKey, baseUrl);
