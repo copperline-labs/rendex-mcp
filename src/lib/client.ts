@@ -104,13 +104,13 @@ export class RendexClient {
 
     const body = (await response.json()) as ApiResponse<ScreenshotResponse>;
 
-    if (!body.success) {
-      const context = httpStatusToContext(response.status);
-      const message = translateError(body.error);
-      throw new RendexApiError(`${context}: ${message}`);
+    if (body.success) {
+      return body.data;
     }
 
-    return body.data;
+    const context = httpStatusToContext(response.status);
+    const message = translateError(body.error);
+    throw new RendexApiError(`${context}: ${message}`);
   }
 }
 
