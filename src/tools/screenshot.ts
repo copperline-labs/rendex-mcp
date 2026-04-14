@@ -87,8 +87,8 @@ export const ScreenshotInputSchema = z.object({
     .number()
     .min(1)
     .max(3)
-    .default(1)
-    .describe("Device pixel ratio (1 = standard, 2 = retina)"),
+    .default(2)
+    .describe("Device pixel ratio (1 = standard, 2 = retina). Defaults to 2× Retina."),
   timeout: z
     .number()
     .int()

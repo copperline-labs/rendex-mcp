@@ -82,11 +82,11 @@ Capture a screenshot or PDF of any webpage or raw HTML.
 | `darkMode` | boolean | `false` | Emulate dark color scheme |
 | `width` | number | `1280` | Viewport width (320-3840) |
 | `height` | number | `800` | Viewport height (240-2160) |
-| `quality` | number | — | Image quality 1-100 (JPEG/WebP only) |
+| `quality` | number | `80` | Image quality 1-100 (JPEG/WebP only, default 80) |
 | `delay` | number | `0` | Wait ms before capture |
 | `blockAds` | boolean | `true` | Block ads and trackers |
 | `blockResourceTypes` | string[] | — | Block resource types: `font`, `image`, `media`, `stylesheet` |
-| `deviceScaleFactor` | number | `1` | Device pixel ratio (1-3) |
+| `deviceScaleFactor` | number | `2` | Device pixel ratio (1-3). 2× Retina by default |
 | `timeout` | number | `30` | Max seconds to wait for page load (5-60) |
 | `waitUntil` | string | `"networkidle2"` | Page readiness: `load`, `domcontentloaded`, `networkidle0`, `networkidle2` |
 | `waitForSelector` | string | — | CSS selector to wait for before capture |

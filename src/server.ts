@@ -21,7 +21,7 @@ export function createRendexServer(apiKey: string, baseUrl?: string) {
 
   server.registerTool(TOOL_NAME, {
     description: TOOL_DESCRIPTION,
-    inputSchema: ScreenshotInputSchema,
+    inputSchema: ScreenshotInputSchema.shape,
   }, async (params) => {
     return handleScreenshot(client, params);
   });
