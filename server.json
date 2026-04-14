@@ -3,7 +3,7 @@
   "name": "io.github.copperline-labs/rendex-mcp",
   "title": "Rendex — Screenshot, PDF & HTML Rendering",
   "description": "Capture screenshots, generate PDFs, and render HTML to images. MCP-native for AI agents.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "websiteUrl": "https://rendex.dev",
   "repository": {
     "url": "https://github.com/copperline-labs/rendex-mcp",
@@ -27,7 +27,7 @@
     {
       "registryType": "npm",
       "identifier": "@copperline/rendex-mcp",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "transport": {
         "type": "stdio"
       },

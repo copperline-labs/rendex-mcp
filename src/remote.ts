@@ -53,10 +53,10 @@ export default {
       return new Response(
         JSON.stringify({
           name: "Rendex MCP Server",
-          description: "Screenshot API for AI agents via Model Context Protocol",
+          description: "Capture screenshots, generate PDFs, and render HTML to images via AI agents — Model Context Protocol server for Rendex",
           mcp_endpoint: "/mcp",
           docs: "https://rendex.dev",
-          version: "1.0.0",
+          version: "1.0.1",
         }),
         {
           headers: { "Content-Type": "application/json" },
