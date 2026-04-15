@@ -1,0 +1,42 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.copperline-labs/rendex-mcp",
+  "title": "Rendex — Screenshot, PDF & HTML Rendering",
+  "description": "Capture screenshots, generate PDFs, and render HTML to images. MCP-native for AI agents.",
+  "version": "1.0.1",
+  "websiteUrl": "https://rendex.dev",
+  "repository": {
+    "url": "https://github.com/copperline-labs/rendex-mcp",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.rendex.dev/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Bearer API key from rendex.dev dashboard",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@copperline/rendex-mcp",
+      "version": "1.0.1",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        {
+          "name": "RENDEX_API_KEY",
+          "description": "API key from rendex.dev dashboard",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
