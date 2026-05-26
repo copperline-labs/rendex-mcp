@@ -245,6 +245,18 @@ export const ScreenshotInputSchema = z.object({
       "Returns a signed URL for retrieval. Requires async=true."
     ),
 
+  // Mustache data templating
+  data: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe(
+      "Key-value data object for Mustache templating. When provided, the 'html' or 'markdown' " +
+      "string is rendered as a logic-less Mustache template before capture — " +
+      "{{var}} inserts HTML-escaped, {{{var}}} inserts raw, " +
+      "{{#items}}...{{/items}} iterates arrays, {{a.b}} accesses nested fields. " +
+      "Not valid with 'url'. Max 256KB serialized."
+    ),
+
   // Geo-targeting (Pro/Enterprise only)
   geo: z
     .string()

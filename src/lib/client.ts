@@ -46,6 +46,7 @@ export interface ScreenshotParams {
   async?: boolean;
   webhookUrl?: string;
   cacheTtl?: number;
+  data?: Record<string, unknown>;
 }
 
 export interface ScreenshotResponse {
