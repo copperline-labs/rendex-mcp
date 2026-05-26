@@ -4,7 +4,7 @@
 [![npm downloads](https://img.shields.io/npm/dw/@copperline/rendex-mcp)](https://www.npmjs.com/package/@copperline/rendex-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-MCP server for [Rendex](https://rendex.dev) — capture screenshots and PDFs of any webpage via AI agents using the Model Context Protocol.
+MCP server for [Rendex](https://rendex.dev) — render raw HTML, Markdown, or any URL to an image or PDF via AI agents using the Model Context Protocol.
 
 ## Quick Start
 
@@ -61,7 +61,7 @@ Connect directly — no installation needed (Claude Desktop only):
 
 ### `rendex_screenshot`
 
-Capture a screenshot or PDF of any webpage or raw HTML.
+Capture a screenshot or PDF of any webpage, raw HTML, or Markdown.
 
 ```
 "Take a screenshot of https://example.com"
@@ -69,14 +69,16 @@ Capture a screenshot or PDF of any webpage or raw HTML.
 "Generate a PDF of https://github.com with A4 page size"
 "Capture https://amazon.de as seen from Germany"
 "Render this HTML invoice as a PDF"
+"Render this Markdown release note as a PDF"
 ```
 
 **Parameters:**
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `url` | string | required* | Webpage URL to capture. Mutually exclusive with `html`. |
-| `html` | string | — | Raw HTML to render. Mutually exclusive with `url`. |
+| `url` | string | required* | Webpage URL to capture. Mutually exclusive with `html` and `markdown`. |
+| `html` | string | — | Raw HTML to render. Mutually exclusive with `url` and `markdown`. |
+| `markdown` | string | — | Markdown to render (server converts to HTML). Mutually exclusive with `url` and `html`. |
 | `format` | `"png"` \| `"jpeg"` \| `"webp"` \| `"pdf"` | `"png"` | Output format |
 | `fullPage` | boolean | `false` | Capture full scrollable page |
 | `darkMode` | boolean | `false` | Emulate dark color scheme |

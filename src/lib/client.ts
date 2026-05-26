@@ -8,6 +8,7 @@ const API_BASE = "https://api.rendex.dev";
 export interface ScreenshotParams {
   url?: string;
   html?: string;
+  markdown?: string;
   format?: "png" | "jpeg" | "webp" | "pdf";
   width?: number;
   height?: number;

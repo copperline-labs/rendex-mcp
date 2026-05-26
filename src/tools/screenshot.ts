@@ -6,26 +6,35 @@ import { RendexClient, RendexApiError } from "../lib/client.js";
 export const TOOL_NAME = "rendex_screenshot";
 
 export const TOOL_DESCRIPTION =
-  "Capture a screenshot or PDF of any webpage or raw HTML. " +
+  "Capture a screenshot or PDF of any webpage, raw HTML, or Markdown. " +
   "Supports full-page capture, dark mode, ad blocking, custom viewports, " +
-  "CSS/JS injection, cookie/header injection, PDF output, HTML rendering, " +
+  "CSS/JS injection, cookie/header injection, PDF output, HTML and Markdown rendering, " +
   "and progressive fallback for heavy sites. Returns partial renders on " +
   "timeout by default (bestAttempt mode).";
 
 export const ScreenshotInputSchema = z.object({
-  // Source — provide url OR html (not both)
+  // Source — provide exactly one of url, html, or markdown
   url: z
     .string()
     .url()
     .optional()
-    .describe("The webpage URL to capture. Mutually exclusive with 'html'."),
+    .describe("The webpage URL to capture. Mutually exclusive with 'html' and 'markdown'."),
   html: z
     .string()
     .max(5_242_880)
     .optional()
     .describe(
-      "Raw HTML to render and capture. Mutually exclusive with 'url'. " +
+      "Raw HTML to render and capture. Mutually exclusive with 'url' and 'markdown'. " +
       "Great for invoices, social cards, email templates, OG images."
+    ),
+  markdown: z
+    .string()
+    .max(5_242_880)
+    .optional()
+    .describe(
+      "Markdown to render to an image or PDF. Mutually exclusive with 'url' and 'html'. " +
+      "The server converts it to HTML before rendering. " +
+      "Great for reports, release notes, README snapshots, documentation cards."
     ),
   format: z
     .enum(["png", "jpeg", "webp", "pdf"])
