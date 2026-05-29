@@ -2,5 +2,5 @@
   "$schema": "https://glama.ai/mcp/schemas/server.json",
   "name": "rendex-mcp",
   "description": "Capture screenshots, generate PDFs, and render HTML to images via AI agents. Supports batch capture, geo-targeting, async webhooks, and CSS/JS injection.",
-  "maintainers": ["Dan425953"]
+  "maintainers": ["copperline-labs"]
 }
