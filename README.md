@@ -91,7 +91,7 @@ Capture a screenshot or PDF of any webpage, raw HTML, or Markdown.
 | `delay` | number | `0` | Wait ms before capture |
 | `blockAds` | boolean | `true` | Block ads and trackers |
 | `blockCookieBanners` | boolean | — | Hide common cookie/consent banners (GDPR/CCPA) before capture |
-| `blockResourceTypes` | string[] | — | Block resource types: `font`, `image`, `media`, `stylesheet` |
+| `blockResourceTypes` | string[] | — | Block resource types: `font`, `image`, `media`, `stylesheet`, `other` |
 | `device` | string | — | Device preset: `desktop`, `iphone_15`, `iphone_se`, `pixel_8`, `ipad`, `ipad_pro` — sets viewport, scale, and user agent in one shot. Overrides `width`/`height`/`deviceScaleFactor`/`userAgent` |
 | `deviceScaleFactor` | number | `2` | Device pixel ratio (1-3). 2× Retina by default |
 | `timeout` | number | `30` | Max seconds to wait for page load (5-60) |
