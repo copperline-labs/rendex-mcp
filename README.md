@@ -79,21 +79,27 @@ Capture a screenshot or PDF of any webpage, raw HTML, or Markdown.
 | `url` | string | required* | Webpage URL to capture. Mutually exclusive with `html` and `markdown`. |
 | `html` | string | — | Raw HTML to render. Mutually exclusive with `url` and `markdown`. |
 | `markdown` | string | — | Markdown to render (server converts to HTML). Mutually exclusive with `url` and `html`. |
+| `data` | object | — | Key-value data for Mustache templating. When set, the `html` or `markdown` string is rendered as a logic-less Mustache template before capture. Invalid with `url`. |
 | `format` | `"png"` \| `"jpeg"` \| `"webp"` \| `"pdf"` | `"png"` | Output format |
 | `fullPage` | boolean | `false` | Capture full scrollable page |
 | `darkMode` | boolean | `false` | Emulate dark color scheme |
 | `width` | number | `1280` | Viewport width (320-3840) |
 | `height` | number | `800` | Viewport height (240-2160) |
+| `resizeWidth` | number | — | Downscale output to this width in px (aspect ratio preserved if `resizeHeight` omitted). Ignored for PDF |
+| `resizeHeight` | number | — | Downscale output to this height in px (aspect ratio preserved if `resizeWidth` omitted). Ignored for PDF |
 | `quality` | number | `80` | Image quality 1-100 (JPEG/WebP only, default 80) |
 | `delay` | number | `0` | Wait ms before capture |
 | `blockAds` | boolean | `true` | Block ads and trackers |
+| `blockCookieBanners` | boolean | — | Hide common cookie/consent banners (GDPR/CCPA) before capture |
 | `blockResourceTypes` | string[] | — | Block resource types: `font`, `image`, `media`, `stylesheet` |
+| `device` | string | — | Device preset: `desktop`, `iphone_15`, `iphone_se`, `pixel_8`, `ipad`, `ipad_pro` — sets viewport, scale, and user agent in one shot. Overrides `width`/`height`/`deviceScaleFactor`/`userAgent` |
 | `deviceScaleFactor` | number | `2` | Device pixel ratio (1-3). 2× Retina by default |
 | `timeout` | number | `30` | Max seconds to wait for page load (5-60) |
 | `waitUntil` | string | `"networkidle2"` | Page readiness: `load`, `domcontentloaded`, `networkidle0`, `networkidle2` |
 | `waitForSelector` | string | — | CSS selector to wait for before capture |
 | `bestAttempt` | boolean | `true` | Return partial render on timeout instead of failing |
 | `selector` | string | — | CSS selector of element to capture instead of full page |
+| `hideSelectors` | string[] | — | CSS selectors to hide (`display:none`) before capture, e.g. `['.modal', '#newsletter-popup']`. Max 50 |
 | `css` | string | — | Custom CSS to inject before capture (max 50KB) |
 | `js` | string | — | Custom JavaScript to execute before capture (max 50KB) |
 | `cookies` | array | — | Cookies to set for authenticated captures (max 50) |
@@ -110,6 +116,44 @@ Capture a screenshot or PDF of any webpage, raw HTML, or Markdown.
 | `async` | boolean | — | Process asynchronously (returns job ID) |
 | `webhookUrl` | string | — | URL to receive callback when async capture completes |
 | `cacheTtl` | number | — | Seconds to cache result (3600-2592000) |
+
+### `rendex_extract`
+
+Extract clean reader-mode content from any webpage as Markdown, JSON, or HTML. Runs the same Chromium render pass as a screenshot, so it captures content **after JavaScript runs** — handling SPAs that fetch-only readers miss. Strips nav, ads, and boilerplate, returning the article body plus title, byline, and excerpt. Great for feeding page content to an LLM, summarization, or RAG ingestion.
+
+```
+"Extract the article text from https://example.com/post as Markdown"
+"Pull the readable content from this SPA as JSON so I can summarize it"
+```
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `url` | string | required | Webpage URL to extract readable content from |
+| `extractFormat` | `"markdown"` \| `"json"` \| `"html"` | `"markdown"` | Output shape — `markdown` (LLM-friendly prose), `json` (structured: title/byline/excerpt/siteName/length), or `html` (cleaned reader-mode HTML) |
+| `device` | string | — | Device preset (`desktop`, `iphone_15`, `iphone_se`, `pixel_8`, `ipad`, `ipad_pro`) — extract the mobile/tablet version of a page |
+| `blockAds` | boolean | `true` | Block ads and trackers before extraction |
+| `blockCookieBanners` | boolean | — | Hide common cookie/consent walls before extraction |
+| `hideSelectors` | string[] | — | CSS selectors to hide before extraction, e.g. `['.modal', '#newsletter-popup']`. Max 50 |
+| `waitUntil` | string | `"networkidle2"` | Page readiness: `load`, `domcontentloaded`, `networkidle0`, `networkidle2` |
+| `timeout` | number | `30` | Max seconds to wait for page load (5-60) |
+
+## Data templating
+
+Turn one reusable template into many documents. Pass a `data` object alongside `html`
+or `markdown`, and Rendex renders the string as a logic-less [Mustache](https://mustache.github.io/)
+template before capture — `{{var}}` interpolation, `{{#items}}…{{/items}}` loops, and
+nested `{{a.b}}` access. Great for invoices, reports, certificates, and OG cards.
+
+```
+"Render this HTML invoice template to a PDF, filling it with this data:
+ <h1>Invoice {{number}}</h1><p>Total: {{total}}</p>
+ data = { number: 'INV-014', total: '$2,400' }"
+```
+
+`data` is valid only with `html` or `markdown` — combining it with `url` returns a
+validation error.
 
 ## Authentication
 

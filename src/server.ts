@@ -7,9 +7,13 @@ import {
   TOOL_DESCRIPTION,
   ScreenshotInputSchema,
   handleScreenshot,
+  EXTRACT_TOOL_NAME,
+  EXTRACT_TOOL_DESCRIPTION,
+  ExtractInputSchema,
+  handleExtract,
 } from "./tools/index.js";
 
-const VERSION = "1.2.0";
+const VERSION = "1.4.0";
 
 export function createRendexServer(apiKey: string, baseUrl?: string) {
   const client = new RendexClient(apiKey, baseUrl);
@@ -26,8 +30,16 @@ export function createRendexServer(apiKey: string, baseUrl?: string) {
     return handleScreenshot(client, params);
   });
 
+  server.registerTool(EXTRACT_TOOL_NAME, {
+    description: EXTRACT_TOOL_DESCRIPTION,
+    inputSchema: ExtractInputSchema.shape,
+  }, async (params) => {
+    return handleExtract(client, params);
+  });
+
   return server;
 }
 
 export { RendexClient } from "./lib/client.js";
 export { TOOL_NAME, TOOL_DESCRIPTION, ScreenshotInputSchema } from "./tools/index.js";
+export { EXTRACT_TOOL_NAME, EXTRACT_TOOL_DESCRIPTION, ExtractInputSchema } from "./tools/index.js";

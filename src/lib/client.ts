@@ -17,6 +17,7 @@ export interface ScreenshotParams {
   delay?: number;
   darkMode?: boolean;
   deviceScaleFactor?: number;
+  device?: "desktop" | "iphone_15" | "iphone_se" | "pixel_8" | "ipad" | "ipad_pro";
   blockAds?: boolean;
   blockResourceTypes?: ("font" | "image" | "media" | "stylesheet" | "other")[];
   timeout?: number;
@@ -24,6 +25,10 @@ export interface ScreenshotParams {
   waitForSelector?: string;
   bestAttempt?: boolean;
   selector?: string;
+  hideSelectors?: string[];
+  blockCookieBanners?: boolean;
+  resizeWidth?: number;
+  resizeHeight?: number;
   css?: string;
   js?: string;
   cookies?: Array<{
@@ -47,6 +52,29 @@ export interface ScreenshotParams {
   webhookUrl?: string;
   cacheTtl?: number;
   data?: Record<string, unknown>;
+}
+
+export interface ExtractParams {
+  url: string;
+  extractFormat?: "markdown" | "json" | "html";
+  waitUntil?: "load" | "domcontentloaded" | "networkidle0" | "networkidle2";
+  timeout?: number;
+  device?: "desktop" | "iphone_15" | "iphone_se" | "pixel_8" | "ipad" | "ipad_pro";
+  blockAds?: boolean;
+  blockCookieBanners?: boolean;
+  hideSelectors?: string[];
+}
+
+export interface ExtractResponse {
+  url: string;
+  format: "markdown" | "json" | "html";
+  content: string;
+  title?: string;
+  byline?: string;
+  excerpt?: string;
+  siteName?: string;
+  length?: number;
+  loadTimeMs: number;
 }
 
 export interface ScreenshotResponse {
@@ -105,6 +133,27 @@ export class RendexClient {
     });
 
     const body = (await response.json()) as ApiResponse<ScreenshotResponse>;
+
+    if (body.success) {
+      return body.data;
+    }
+
+    const context = httpStatusToContext(response.status);
+    const message = translateError(body.error);
+    throw new RendexApiError(`${context}: ${message}`);
+  }
+
+  async extract(params: ExtractParams): Promise<ExtractResponse> {
+    const response = await fetch(`${this.baseUrl}/v1/extract`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify(params),
+    });
+
+    const body = (await response.json()) as ApiResponse<ExtractResponse>;
 
     if (body.success) {
       return body.data;

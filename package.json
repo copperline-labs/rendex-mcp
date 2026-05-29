@@ -1,8 +1,8 @@
 {
   "name": "@copperline/rendex-mcp",
   "mcpName": "io.github.copperline-labs/rendex-mcp",
-  "version": "1.2.0",
-  "description": "MCP server for Rendex — capture screenshots, generate PDFs, and render HTML to images via AI agents",
+  "version": "1.4.0",
+  "description": "MCP server for Rendex — capture screenshots, generate PDFs, and render HTML or Markdown to images via AI agents",
   "type": "module",
   "bin": {
     "rendex-mcp": "./dist/stdio.js"

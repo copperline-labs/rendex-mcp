@@ -98,6 +98,13 @@ export const ScreenshotInputSchema = z.object({
     .max(3)
     .default(2)
     .describe("Device pixel ratio (1 = standard, 2 = retina). Defaults to 2× Retina."),
+  device: z
+    .enum(["desktop", "iphone_15", "iphone_se", "pixel_8", "ipad", "ipad_pro"])
+    .optional()
+    .describe(
+      "Device preset that sets viewport, scale factor, and user agent in one shot. " +
+      "E.g. 'iphone_15' for a mobile screenshot. Overrides width/height/deviceScaleFactor/userAgent."
+    ),
   timeout: z
     .number()
     .int()
@@ -136,6 +143,41 @@ export const ScreenshotInputSchema = z.object({
     .describe(
       "CSS selector of a specific element to capture instead of the full page. " +
       "Useful for OG images, component extraction (e.g. '#hero', '.pricing-card')"
+    ),
+  hideSelectors: z
+    .array(z.string())
+    .max(50)
+    .optional()
+    .describe(
+      "CSS selectors to hide (display:none) before capture. " +
+      "E.g. ['.modal', '#newsletter-popup'] to remove overlays. Max 50 selectors."
+    ),
+  blockCookieBanners: z
+    .boolean()
+    .optional()
+    .describe(
+      "Hide common cookie/consent walls (GDPR/CCPA banners) before capture. " +
+      "A curated selector list, lighter than custom hideSelectors."
+    ),
+  resizeWidth: z
+    .number()
+    .int()
+    .min(16)
+    .max(3840)
+    .optional()
+    .describe(
+      "Downscale the captured image to this width in pixels (16-3840). " +
+      "Aspect ratio is preserved if resizeHeight is omitted. Ignored for PDF."
+    ),
+  resizeHeight: z
+    .number()
+    .int()
+    .min(16)
+    .max(2160)
+    .optional()
+    .describe(
+      "Downscale the captured image to this height in pixels (16-2160). " +
+      "Aspect ratio is preserved if resizeWidth is omitted. Ignored for PDF."
     ),
 
   // CSS/JS Injection
