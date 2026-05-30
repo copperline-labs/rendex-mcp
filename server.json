@@ -1,8 +1,8 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.copperline-labs/rendex-mcp",
-  "title": "Rendex — Screenshot, PDF & HTML Rendering",
-  "description": "Capture screenshots, generate PDFs, and render HTML to images. MCP-native for AI agents.",
+  "title": "Rendex: Rendering API for Images, PDFs & Content Extraction",
+  "description": "Render HTML, Markdown, or any URL to PNG, JPEG, WebP, or PDF, with Mustache data templating, batch, and async webhooks. Plus reader-mode extraction to clean Markdown, JSON, or HTML. MCP-native for AI agents.",
   "version": "1.4.0",
   "websiteUrl": "https://rendex.dev",
   "repository": {
