@@ -61,7 +61,7 @@ Connect directly — no installation needed (Claude Desktop only):
 
 ### `rendex_screenshot`
 
-Capture a screenshot or PDF of any webpage, raw HTML, or Markdown.
+Render any webpage, raw HTML, or Markdown to an image or PDF.
 
 ```
 "Take a screenshot of https://example.com"
