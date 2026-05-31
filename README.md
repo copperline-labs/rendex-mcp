@@ -3,6 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@copperline/rendex-mcp)](https://www.npmjs.com/package/@copperline/rendex-mcp)
 [![npm downloads](https://img.shields.io/npm/dw/@copperline/rendex-mcp)](https://www.npmjs.com/package/@copperline/rendex-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![MCP Badge](https://lobehub.com/badge/mcp/copperline-labs-rendex-mcp)](https://lobehub.com/mcp/copperline-labs-rendex-mcp)
 
 MCP server for [Rendex](https://rendex.dev) — render raw HTML, Markdown, or any URL to an image or PDF via AI agents using the Model Context Protocol.
 
