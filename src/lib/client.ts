@@ -5,6 +5,13 @@ import type { RendexRestError } from "./errors.js";
 
 const API_BASE = "https://api.rendex.dev";
 
+// Identifies remote (mcp.rendex.dev Worker) and stdio MCP traffic in API
+// analytics so agent usage is attributable instead of landing in "Unknown"
+// (CF Worker fetch sends no UA) or "Code (node)". Kept in sync by
+// scripts/bump-version.sh (mirrors VERSION in src/server.ts).
+const VERSION = "1.4.1";
+const USER_AGENT = `rendex-mcp/${VERSION}`;
+
 export interface ScreenshotParams {
   url?: string;
   html?: string;
@@ -128,6 +135,7 @@ export class RendexClient {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${this.apiKey}`,
+        "User-Agent": USER_AGENT,
       },
       body: JSON.stringify(params),
     });
@@ -149,6 +157,7 @@ export class RendexClient {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${this.apiKey}`,
+        "User-Agent": USER_AGENT,
       },
       body: JSON.stringify(params),
     });

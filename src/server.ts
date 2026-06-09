@@ -13,7 +13,7 @@ import {
   handleExtract,
 } from "./tools/index.js";
 
-const VERSION = "1.4.0";
+const VERSION = "1.4.1";
 
 export function createRendexServer(apiKey: string, baseUrl?: string) {
   const client = new RendexClient(apiKey, baseUrl);
