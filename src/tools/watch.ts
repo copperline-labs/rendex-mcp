@@ -7,7 +7,7 @@
 
 import { z } from "zod";
 import { RendexClient, RendexApiError } from "../lib/client.js";
-import type { CreateWatchParams, ListWatchesQuery, ListWatchRunsQuery } from "../lib/client.js";
+import type { CreateWatchParams, UpdateWatchParams, ListWatchesQuery, ListWatchRunsQuery } from "../lib/client.js";
 
 // Mirror the API's URL forgiveness (screenshot-api schemas/watch-params.ts
 // prependHttps): the API normalizes a schemeless host like "rendex.dev/pricing"
@@ -143,6 +143,37 @@ export const WATCH_DELETE_DESCRIPTION = "Delete a watch and its run history. Irr
 export const WatchDeleteInputSchema = z.object({ id: z.string().describe("The watch ID (UUID).") });
 export type WatchDeleteInput = z.infer<typeof WatchDeleteInputSchema>;
 
+export const WATCH_UPDATE_NAME = "watch_update";
+export const WATCH_UPDATE_DESCRIPTION =
+  "Update a watch in place — pause/resume (paused), re-point (url), change schedule/diff/notify " +
+  "settings, or turn a channel off (webhookUrl/notifyEmail = null). Only the fields you send change; " +
+  "renderParams is deep-merged over the existing config. A scope change (url/selector/fullPage/size/device) " +
+  "re-baselines on the next check. Returns the updated watch as JSON.";
+// A partial of the create shape: every field optional, no defaults injected
+// (.partial() neutralizes the create defaults), and webhookUrl/notifyEmail accept
+// null to clear a channel — mirrors the API's UpdateWatchRequest.
+export const WatchUpdateInputSchema = z
+  .object({
+    id: z.string().describe("The watch ID (UUID) to update."),
+    url: z.preprocess(prependHttps, z.string().url()).optional()
+      .describe("Re-point to a new URL (clears the baseline; the next check re-baselines)."),
+    name: z.string().max(120).nullable().optional().describe("Rename the watch (null to clear)."),
+    intervalMinutes: z.number().int().min(5).max(43_200).optional()
+      .describe("New check frequency in minutes (subject to your plan's floor)."),
+    diffMode: z.enum(["visual", "text", "both"]).optional().describe("Change what counts as a change."),
+    threshold: z.number().min(0).max(1).optional().describe("Change the visual-change noise floor (0..1)."),
+    renderParams: RenderParamsSchema.partial().optional()
+      .describe("Render knobs to deep-merge over the existing capture config."),
+    aiSummary: z.boolean().optional().describe("Pro+ — toggle the AI 'what changed' summary (roadmap)."),
+    webhookUrl: z.preprocess(prependHttps, z.string().url()).nullable().optional()
+      .describe("Starter+ — set or replace the change-webhook target; null to turn it off."),
+    notifyEmail: z.string().email().nullable().optional()
+      .describe("Set the alert email (your account email only); null to turn it off."),
+    paused: z.boolean().optional().describe("true to pause the watch, false to resume."),
+  })
+  .strict();
+export type WatchUpdateInput = z.infer<typeof WatchUpdateInputSchema>;
+
 // ─── Handlers ──
 function jsonText(value: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] };
@@ -209,5 +240,14 @@ export async function handleWatchDelete(client: RendexClient, params: WatchDelet
     return { content: [{ type: "text" as const, text: `Watch ${params.id} deleted.` }] };
   } catch (err) {
     return errorResult(err, "Unknown error deleting watch");
+  }
+}
+
+export async function handleWatchUpdate(client: RendexClient, params: WatchUpdateInput) {
+  try {
+    const { id, ...patch } = params;
+    return jsonText(await client.watchUpdate(id, patch as UpdateWatchParams));
+  } catch (err) {
+    return errorResult(err, "Unknown error updating watch");
   }
 }

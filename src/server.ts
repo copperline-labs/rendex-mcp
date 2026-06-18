@@ -7,6 +7,10 @@ import {
   TOOL_DESCRIPTION,
   ScreenshotInputSchema,
   handleScreenshot,
+  RENDER_LINK_NAME,
+  RENDER_LINK_DESCRIPTION,
+  RenderLinkInputSchema,
+  handleRenderLink,
   EXTRACT_TOOL_NAME,
   EXTRACT_TOOL_DESCRIPTION,
   ExtractInputSchema,
@@ -39,6 +43,10 @@ import {
   WATCH_DELETE_DESCRIPTION,
   WatchDeleteInputSchema,
   handleWatchDelete,
+  WATCH_UPDATE_NAME,
+  WATCH_UPDATE_DESCRIPTION,
+  WatchUpdateInputSchema,
+  handleWatchUpdate,
 } from "./tools/index.js";
 
 const VERSION = "1.5.0";
@@ -63,6 +71,13 @@ export function createRendexServer(apiKey: string, baseUrl?: string) {
     inputSchema: ExtractInputSchema.shape,
   }, async (params) => {
     return handleExtract(client, params);
+  });
+
+  server.registerTool(RENDER_LINK_NAME, {
+    description: RENDER_LINK_DESCRIPTION,
+    inputSchema: RenderLinkInputSchema.shape,
+  }, async (params) => {
+    return handleRenderLink(client, params);
   });
 
   // ─── Rendex Watch ──
@@ -100,6 +115,11 @@ export function createRendexServer(apiKey: string, baseUrl?: string) {
     description: WATCH_DELETE_DESCRIPTION,
     inputSchema: WatchDeleteInputSchema.shape,
   }, async (params) => handleWatchDelete(client, params));
+
+  server.registerTool(WATCH_UPDATE_NAME, {
+    description: WATCH_UPDATE_DESCRIPTION,
+    inputSchema: WatchUpdateInputSchema.shape,
+  }, async (params) => handleWatchUpdate(client, params));
 
   return server;
 }

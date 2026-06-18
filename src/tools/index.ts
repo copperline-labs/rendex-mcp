@@ -3,8 +3,12 @@ export {
   TOOL_DESCRIPTION,
   ScreenshotInputSchema,
   handleScreenshot,
+  RENDER_LINK_NAME,
+  RENDER_LINK_DESCRIPTION,
+  RenderLinkInputSchema,
+  handleRenderLink,
 } from "./screenshot.js";
-export type { ScreenshotInput } from "./screenshot.js";
+export type { ScreenshotInput, RenderLinkInput } from "./screenshot.js";
 export {
   EXTRACT_TOOL_NAME,
   EXTRACT_TOOL_DESCRIPTION,
@@ -43,6 +47,10 @@ export {
   WATCH_DELETE_DESCRIPTION,
   WatchDeleteInputSchema,
   handleWatchDelete,
+  WATCH_UPDATE_NAME,
+  WATCH_UPDATE_DESCRIPTION,
+  WatchUpdateInputSchema,
+  handleWatchUpdate,
 } from "./watch.js";
 export type {
   WatchCreateInput,
@@ -52,4 +60,5 @@ export type {
   WatchRunInput,
   WatchRunsInput,
   WatchDeleteInput,
+  WatchUpdateInput,
 } from "./watch.js";

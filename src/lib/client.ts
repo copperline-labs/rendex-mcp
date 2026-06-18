@@ -99,6 +99,15 @@ export interface ScreenshotResponse {
   truncated?: boolean;
 }
 
+// A signed, hosted, edge-cached render URL (POST /v1/render/link) for embedding
+// in <meta property="og:image"> or an <img> tag.
+export interface RenderLinkResult {
+  url: string;
+  expiresAt: string;
+  format: string;
+  cacheTtl: number;
+}
+
 // ─── Rendex Watch (website-change monitoring) ────────────────────────
 
 export interface WatchRenderParams {
@@ -136,6 +145,21 @@ export interface CreateWatchParams {
   aiSummary?: boolean;
   webhookUrl?: string;
   notifyEmail?: string;
+  paused?: boolean;
+}
+
+// Partial create shape for PATCH /v1/watches/{id}. webhookUrl/notifyEmail accept
+// null to clear a channel; renderParams is deep-merged server-side.
+export interface UpdateWatchParams {
+  url?: string;
+  name?: string | null;
+  intervalMinutes?: number;
+  diffMode?: "visual" | "text" | "both";
+  threshold?: number;
+  renderParams?: WatchRenderParams;
+  aiSummary?: boolean;
+  webhookUrl?: string | null;
+  notifyEmail?: string | null;
   paused?: boolean;
 }
 
@@ -289,6 +313,10 @@ export class RendexClient {
     throw new RendexApiError(formatApiError(response.status, body.error));
   }
 
+  async renderLink(params: ScreenshotParams & { expiresIn?: number }): Promise<RenderLinkResult> {
+    return this.request<RenderLinkResult>("POST", "/v1/render/link", params);
+  }
+
   // ─── Rendex Watch ──────────────────────────────────────────────────
 
   async watchCreate(params: CreateWatchParams): Promise<Watch> {
@@ -317,6 +345,10 @@ export class RendexClient {
 
   async watchDelete(id: string): Promise<void> {
     await this.request<void>("DELETE", `/v1/watches/${encodeURIComponent(id)}`);
+  }
+
+  async watchUpdate(id: string, patch: UpdateWatchParams): Promise<Watch> {
+    return this.request<Watch>("PATCH", `/v1/watches/${encodeURIComponent(id)}`, patch);
   }
 
   // ─── Shared request helper (GET/POST/PATCH/DELETE + 204 + envelope) ──

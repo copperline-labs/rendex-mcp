@@ -399,3 +399,52 @@ export async function handleScreenshot(
     };
   }
 }
+
+// ─── rendex_render_link Tool ─────────────────────────────────────────
+// Mint a signed, hosted, edge-cached render URL instead of returning bytes —
+// drop it straight into <meta property="og:image"> or an <img> tag.
+
+export const RENDER_LINK_NAME = "rendex_render_link";
+
+export const RENDER_LINK_DESCRIPTION =
+  "Render a URL, raw HTML, or Markdown and get back a signed, hosted, edge-cached image URL " +
+  "instead of the bytes — ideal for dynamic OG images: drop the URL into " +
+  '<meta property="og:image"> or an <img> tag and Rendex serves a cached copy on every share. ' +
+  "Takes the same options as rendex_screenshot, plus an optional expiresIn. Returns " +
+  "{ url, expiresAt, format, cacheTtl } as JSON.";
+
+export const RenderLinkInputSchema = ScreenshotInputSchema.extend({
+  expiresIn: z
+    .number()
+    .int()
+    .min(60)
+    .max(2_592_000)
+    .optional()
+    .describe("Seconds until the signed URL expires (60–2592000). Defaults to the server's TTL."),
+});
+
+export type RenderLinkInput = z.infer<typeof RenderLinkInputSchema>;
+
+export async function handleRenderLink(
+  client: RendexClient,
+  params: RenderLinkInput
+) {
+  try {
+    const result = await client.renderLink(params);
+    return {
+      content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+    };
+  } catch (err) {
+    const message =
+      err instanceof RendexApiError
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : "Unknown error minting render link";
+
+    return {
+      content: [{ type: "text" as const, text: message }],
+      isError: true,
+    };
+  }
+}
