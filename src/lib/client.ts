@@ -9,7 +9,7 @@ const API_BASE = "https://api.rendex.dev";
 // analytics so agent usage is attributable instead of landing in "Unknown"
 // (CF Worker fetch sends no UA) or "Code (node)". Kept in sync by
 // scripts/bump-version.sh (mirrors VERSION in src/server.ts).
-const VERSION = "1.5.0";
+const VERSION = "1.5.1";
 const USER_AGENT = `rendex-mcp/${VERSION}`;
 
 export interface ScreenshotParams {
