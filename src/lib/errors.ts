@@ -4,6 +4,11 @@ export interface RendexRestError {
   code: string;
   message: string;
   details?: unknown;
+  /**
+   * Present on plan-wall responses (the API's upgradeError() + the over-quota
+   * 429). The actionable upgrade link — surfaced to the agent, never dropped.
+   */
+  upgrade_url?: string;
 }
 
 const ERROR_MESSAGES: Record<string, (original: string) => string> = {
@@ -31,11 +36,17 @@ const ERROR_MESSAGES: Record<string, (original: string) => string> = {
   INTERNAL_ERROR: () =>
     "An internal server error occurred. Please try again or contact support.",
   FORBIDDEN: () =>
-    "Access denied. Check your API key permissions.",
+    "Check your API key permissions.",
   GEO_FEATURE_UNAVAILABLE: (msg) => `Geo-targeting issue: ${msg}`,
   PLAN_UPGRADE_REQUIRED: (msg) => `Plan upgrade required: ${msg}`,
   CONFIGURATION_ERROR: () =>
     "A server configuration issue occurred. Please try again later.",
+  // ── Rendex Watch ──
+  WATCH_NOT_FOUND: (msg) => msg || "Watch not found.",
+  WATCH_PAUSED: (msg) => msg || "This watch is paused — resume it before running.",
+  WATCH_LIMIT_REACHED: (msg) => `Watch limit reached. ${msg}`,
+  WATCH_HOST_LIMIT_REACHED: (msg) => msg,
+  WATCH_INTERVAL_TOO_FAST: (msg) => `Check interval too fast for your plan. ${msg}`,
 };
 
 export function translateError(error: RendexRestError): string {
@@ -61,4 +72,30 @@ export function httpStatusToContext(status: number): string {
     default:
       return `HTTP ${status}`;
   }
+}
+
+// Plan/limit walls that the API returns as 403 (Watch caps, paid-feature gates).
+// These are conversion moments, NOT auth failures — prefixing them with the
+// status-derived "Access denied" makes an agent read a quota as a bad key. For
+// these codes we drop the prefix (the message already names the limit) and lean
+// on the appended upgrade_url. Genuine auth-forbidden (FORBIDDEN /
+// INSUFFICIENT_PERMISSIONS) and every other status keep the status context.
+const UPGRADE_LIMIT_CODES = new Set([
+  "WATCH_LIMIT_REACHED",
+  "WATCH_HOST_LIMIT_REACHED",
+  "WATCH_INTERVAL_TOO_FAST",
+  "PLAN_UPGRADE_REQUIRED",
+]);
+
+// Compose the agent-readable error string from an HTTP status + the REST error
+// body. The single place that decides whether the "Access denied"/status prefix
+// applies and that re-attaches the API's upgrade_url (which translateError drops).
+export function formatApiError(status: number, error: RendexRestError): string {
+  const message = translateError(error);
+  const withUpgrade = (base: string) =>
+    error.upgrade_url ? `${base} Upgrade: ${error.upgrade_url}` : base;
+  if (UPGRADE_LIMIT_CODES.has(error.code)) {
+    return withUpgrade(message);
+  }
+  return withUpgrade(`${httpStatusToContext(status)}: ${message}`);
 }

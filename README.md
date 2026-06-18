@@ -140,6 +140,28 @@ Extract clean reader-mode content from any webpage as Markdown, JSON, or HTML. R
 | `waitUntil` | string | `"networkidle2"` | Page readiness: `load`, `domcontentloaded`, `networkidle0`, `networkidle2` |
 | `timeout` | number | `30` | Max seconds to wait for page load (5-60) |
 
+### Rendex Watch
+
+Monitor a URL on a schedule and get notified when it changes — real-Chrome **visual diff** (with a highlighted overlay), an extracted-**text** diff, or **both**. Seven tools let an agent set up, inspect, and tear down watches on the shared Rendex platform (one `rdx_` key, one credit pool).
+
+```
+"Watch https://example.com/pricing for visual changes and alert my webhook"
+"Before I save it, test whether you can capture #pricing on that page"
+"Show me the last few runs of watch <id> — did anything change?"
+```
+
+| Tool | Purpose | Key inputs |
+|------|---------|-----------|
+| `watch_create` | Create a watch (active → captures its baseline now) | `url`, `name?`, `intervalMinutes?`, `diffMode?` (visual/text/both), `threshold?`, `renderParams?`, `webhookUrl?` (Starter+), `notifyEmail?`, `paused?` |
+| `watch_test` | Dry-run a config first (creates nothing) | same as `watch_create` |
+| `watch_list` | List your watches | `status?` (active/paused/all), `cursor?`, `limit?` |
+| `watch_get` | Fetch one watch (+ baseline URL) | `id` |
+| `watch_run` | Run a check now (1 credit) | `id` |
+| `watch_runs` | Run history with signed before/after/overlay URLs | `id`, `cursor?`, `limit?` |
+| `watch_delete` | Delete a watch + its runs | `id` |
+
+`renderParams` carries the per-check capture knobs (`fullPage` defaults to **true**, `selector`, `device`, `geo` (Pro+), plus noise controls `ignoreRegions`/`ignoreText`/`minTextChars`/`suppressWhilePresent` and `uaMode`). Interval floors are per-plan (Free 1440 / Starter 180 / Pro 30 / Enterprise 5). Watch metadata + signed image URLs are returned as JSON text.
+
 ## Data templating
 
 Turn one reusable template into many documents. Pass a `data` object alongside `html`

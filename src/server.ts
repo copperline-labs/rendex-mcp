@@ -11,9 +11,37 @@ import {
   EXTRACT_TOOL_DESCRIPTION,
   ExtractInputSchema,
   handleExtract,
+  WATCH_CREATE_NAME,
+  WATCH_CREATE_DESCRIPTION,
+  WatchCreateInputSchema,
+  handleWatchCreate,
+  WATCH_TEST_NAME,
+  WATCH_TEST_DESCRIPTION,
+  WatchTestInputSchema,
+  handleWatchTest,
+  WATCH_LIST_NAME,
+  WATCH_LIST_DESCRIPTION,
+  WatchListInputSchema,
+  handleWatchList,
+  WATCH_GET_NAME,
+  WATCH_GET_DESCRIPTION,
+  WatchGetInputSchema,
+  handleWatchGet,
+  WATCH_RUN_NAME,
+  WATCH_RUN_DESCRIPTION,
+  WatchRunInputSchema,
+  handleWatchRun,
+  WATCH_RUNS_NAME,
+  WATCH_RUNS_DESCRIPTION,
+  WatchRunsInputSchema,
+  handleWatchRuns,
+  WATCH_DELETE_NAME,
+  WATCH_DELETE_DESCRIPTION,
+  WatchDeleteInputSchema,
+  handleWatchDelete,
 } from "./tools/index.js";
 
-const VERSION = "1.4.1";
+const VERSION = "1.5.0";
 
 export function createRendexServer(apiKey: string, baseUrl?: string) {
   const client = new RendexClient(apiKey, baseUrl);
@@ -36,6 +64,42 @@ export function createRendexServer(apiKey: string, baseUrl?: string) {
   }, async (params) => {
     return handleExtract(client, params);
   });
+
+  // ─── Rendex Watch ──
+  server.registerTool(WATCH_CREATE_NAME, {
+    description: WATCH_CREATE_DESCRIPTION,
+    inputSchema: WatchCreateInputSchema.shape,
+  }, async (params) => handleWatchCreate(client, params));
+
+  server.registerTool(WATCH_TEST_NAME, {
+    description: WATCH_TEST_DESCRIPTION,
+    inputSchema: WatchTestInputSchema.shape,
+  }, async (params) => handleWatchTest(client, params));
+
+  server.registerTool(WATCH_LIST_NAME, {
+    description: WATCH_LIST_DESCRIPTION,
+    inputSchema: WatchListInputSchema.shape,
+  }, async (params) => handleWatchList(client, params));
+
+  server.registerTool(WATCH_GET_NAME, {
+    description: WATCH_GET_DESCRIPTION,
+    inputSchema: WatchGetInputSchema.shape,
+  }, async (params) => handleWatchGet(client, params));
+
+  server.registerTool(WATCH_RUN_NAME, {
+    description: WATCH_RUN_DESCRIPTION,
+    inputSchema: WatchRunInputSchema.shape,
+  }, async (params) => handleWatchRun(client, params));
+
+  server.registerTool(WATCH_RUNS_NAME, {
+    description: WATCH_RUNS_DESCRIPTION,
+    inputSchema: WatchRunsInputSchema.shape,
+  }, async (params) => handleWatchRuns(client, params));
+
+  server.registerTool(WATCH_DELETE_NAME, {
+    description: WATCH_DELETE_DESCRIPTION,
+    inputSchema: WatchDeleteInputSchema.shape,
+  }, async (params) => handleWatchDelete(client, params));
 
   return server;
 }

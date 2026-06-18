@@ -56,7 +56,7 @@ export default {
           description: "Capture screenshots, generate PDFs, and render HTML to images via AI agents — Model Context Protocol server for Rendex",
           mcp_endpoint: "/mcp",
           docs: "https://rendex.dev",
-          version: "1.4.1",
+          version: "1.5.0",
         }),
         {
           headers: { "Content-Type": "application/json" },

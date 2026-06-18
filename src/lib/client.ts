@@ -1,6 +1,6 @@
 // ─── HTTP Client for Rendex REST API ─────────────────────────────────
 
-import { translateError, httpStatusToContext } from "./errors.js";
+import { formatApiError, httpStatusToContext } from "./errors.js";
 import type { RendexRestError } from "./errors.js";
 
 const API_BASE = "https://api.rendex.dev";
@@ -9,7 +9,7 @@ const API_BASE = "https://api.rendex.dev";
 // analytics so agent usage is attributable instead of landing in "Unknown"
 // (CF Worker fetch sends no UA) or "Code (node)". Kept in sync by
 // scripts/bump-version.sh (mirrors VERSION in src/server.ts).
-const VERSION = "1.4.1";
+const VERSION = "1.5.0";
 const USER_AGENT = `rendex-mcp/${VERSION}`;
 
 export interface ScreenshotParams {
@@ -99,6 +99,126 @@ export interface ScreenshotResponse {
   truncated?: boolean;
 }
 
+// ─── Rendex Watch (website-change monitoring) ────────────────────────
+
+export interface WatchRenderParams {
+  format?: "png" | "jpeg" | "webp" | "pdf";
+  width?: number;
+  height?: number;
+  fullPage?: boolean;
+  device?: "desktop" | "iphone_15" | "iphone_se" | "pixel_8" | "ipad" | "ipad_pro";
+  deviceScaleFactor?: number;
+  darkMode?: boolean;
+  blockAds?: boolean;
+  blockCookieBanners?: boolean;
+  hideSelectors?: string[];
+  waitUntil?: "load" | "domcontentloaded" | "networkidle0" | "networkidle2";
+  delay?: number;
+  timeout?: number;
+  geo?: string;
+  geoCity?: string;
+  geoState?: string;
+  selector?: string;
+  ignoreRegions?: Array<{ x: number; y: number; width: number; height: number }>;
+  ignoreText?: string[];
+  minTextChars?: number;
+  suppressWhilePresent?: string[];
+  uaMode?: "auto" | "identify" | "stealth";
+}
+
+export interface CreateWatchParams {
+  url: string;
+  name?: string;
+  intervalMinutes?: number;
+  diffMode?: "visual" | "text" | "both";
+  threshold?: number;
+  renderParams?: WatchRenderParams;
+  aiSummary?: boolean;
+  webhookUrl?: string;
+  notifyEmail?: string;
+  paused?: boolean;
+}
+
+export interface ListWatchesQuery {
+  status?: "active" | "paused" | "all";
+  cursor?: string;
+  limit?: number;
+}
+
+export interface ListWatchRunsQuery {
+  cursor?: string;
+  limit?: number;
+}
+
+export interface Watch {
+  id: string;
+  url: string;
+  name: string | null;
+  intervalMinutes: number;
+  diffMode: "visual" | "text" | "both";
+  threshold: number;
+  renderParams: WatchRenderParams;
+  aiSummary: boolean;
+  webhookUrl: string | null;
+  notifyEmail: string | null;
+  status: "active" | "paused";
+  baselineImageUrl: string | null;
+  baselineCapturedAt: string | null;
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+  lastChangedAt: string | null;
+  lastStatus: string | null;
+  consecutiveFailures: number;
+  uaBlockedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WatchRun {
+  id: string;
+  watchId: string;
+  status: "queued" | "processing" | "completed" | "failed";
+  changed: boolean | null;
+  diffScore: number | null;
+  diffPixels: number | null;
+  beforeUrl: string | null;
+  afterUrl: string | null;
+  diffOverlayUrl: string | null;
+  textDiff: { added?: string[]; removed?: string[]; summary?: string } | null;
+  creditsCharged: number;
+  error: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface WatchTestResult {
+  ok: boolean;
+  reachable: boolean;
+  format?: string;
+  httpStatus?: number | null;
+  usedGeo?: boolean;
+  screenshotUrl?: string | null;
+  extractedText?: string | null;
+  capturedAt?: string;
+  reason?: string;
+}
+
+export interface WatchRunQueued {
+  runId: string;
+  watchId: string;
+  status: "queued";
+}
+
+export interface WatchList {
+  items: Watch[];
+  nextCursor: string | null;
+}
+
+export interface WatchRunList {
+  items: WatchRun[];
+  nextCursor: string | null;
+}
+
 interface ApiSuccessResponse<T> {
   success: true;
   data: T;
@@ -146,9 +266,7 @@ export class RendexClient {
       return body.data;
     }
 
-    const context = httpStatusToContext(response.status);
-    const message = translateError(body.error);
-    throw new RendexApiError(`${context}: ${message}`);
+    throw new RendexApiError(formatApiError(response.status, body.error));
   }
 
   async extract(params: ExtractParams): Promise<ExtractResponse> {
@@ -168,9 +286,74 @@ export class RendexClient {
       return body.data;
     }
 
-    const context = httpStatusToContext(response.status);
-    const message = translateError(body.error);
-    throw new RendexApiError(`${context}: ${message}`);
+    throw new RendexApiError(formatApiError(response.status, body.error));
+  }
+
+  // ─── Rendex Watch ──────────────────────────────────────────────────
+
+  async watchCreate(params: CreateWatchParams): Promise<Watch> {
+    return this.request<Watch>("POST", "/v1/watches", params);
+  }
+
+  async watchList(query?: ListWatchesQuery): Promise<WatchList> {
+    return this.request<WatchList>("GET", `/v1/watches${this.qs(query)}`);
+  }
+
+  async watchGet(id: string): Promise<Watch> {
+    return this.request<Watch>("GET", `/v1/watches/${encodeURIComponent(id)}`);
+  }
+
+  async watchRun(id: string): Promise<WatchRunQueued> {
+    return this.request<WatchRunQueued>("POST", `/v1/watches/${encodeURIComponent(id)}/run`, {});
+  }
+
+  async watchTest(params: CreateWatchParams): Promise<WatchTestResult> {
+    return this.request<WatchTestResult>("POST", "/v1/watches/test", params);
+  }
+
+  async watchRuns(id: string, query?: ListWatchRunsQuery): Promise<WatchRunList> {
+    return this.request<WatchRunList>("GET", `/v1/watches/${encodeURIComponent(id)}/runs${this.qs(query)}`);
+  }
+
+  async watchDelete(id: string): Promise<void> {
+    await this.request<void>("DELETE", `/v1/watches/${encodeURIComponent(id)}`);
+  }
+
+  // ─── Shared request helper (GET/POST/PATCH/DELETE + 204 + envelope) ──
+
+  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.apiKey}`,
+      "User-Agent": USER_AGENT,
+    };
+    if (body !== undefined) headers["Content-Type"] = "application/json";
+
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      method,
+      headers,
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    });
+
+    // 204 No Content (DELETE) — nothing to parse.
+    if (response.status === 204) return undefined as T;
+
+    const parsed = (await response.json().catch(() => null)) as ApiResponse<T> | null;
+    if (parsed && parsed.success) return parsed.data;
+
+    if (parsed && parsed.success === false) {
+      throw new RendexApiError(formatApiError(response.status, parsed.error));
+    }
+    throw new RendexApiError(`${httpStatusToContext(response.status)}: HTTP ${response.status}`);
+  }
+
+  private qs(query?: ListWatchesQuery | ListWatchRunsQuery): string {
+    if (!query) return "";
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    }
+    const s = params.toString();
+    return s ? `?${s}` : "";
   }
 }
 
