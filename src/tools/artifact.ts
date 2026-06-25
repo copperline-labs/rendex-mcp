@@ -83,6 +83,10 @@ export async function handleArtifact(client: RendexClient, params: ArtifactInput
     const result = await client.artifact(params);
     return {
       content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+      // ChatGPT Apps populates the preview widget's window.openai.toolOutput from
+      // structuredContent (NOT the text block). Without this the artifact-preview
+      // widget renders its frame but shows "No artifact links returned".
+      structuredContent: result as unknown as Record<string, unknown>,
     };
   } catch (err) {
     const message =
