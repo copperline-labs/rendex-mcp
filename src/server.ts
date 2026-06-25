@@ -198,12 +198,37 @@ export function createRendexServer(
   // download + open-share links. Gated behind opts.widgets so the stdio/npm
   // surface and non-ChatGPT clients stay clean.
   if (opts.widgets) {
+    // ChatGPT Apps requires a widget template to declare its sandbox domain + a
+    // CSP, or submission fails ("Widget CSP/domain not set"). This preview only
+    // loads the rendered PNG and links to the PDF/PNG/share page — all hosted on
+    // api.rendex.dev. We set both the standard `ui` form and the legacy openai/*
+    // keys (and the legacy redirect_domains for the open/download links).
+    const widgetMeta = {
+      "openai/widgetDomain": "https://rendex.dev",
+      "openai/widgetDescription":
+        "Preview of a rendered Rendex artifact — a PNG preview with Download PDF/PNG and Open share-page links.",
+      "openai/widgetCSP": {
+        connect_domains: ["https://api.rendex.dev"],
+        resource_domains: ["https://api.rendex.dev"],
+        redirect_domains: ["https://api.rendex.dev"],
+      },
+      ui: {
+        domain: "https://rendex.dev",
+        csp: {
+          connectDomains: ["https://api.rendex.dev"],
+          resourceDomains: ["https://api.rendex.dev"],
+        },
+      },
+    };
     server.registerResource(
       "artifact-preview",
       WIDGET_URI,
-      { title: "Rendex artifact preview", mimeType: WIDGET_MIME },
+      { title: "Rendex artifact preview", mimeType: WIDGET_MIME, _meta: widgetMeta },
       async () => ({
-        contents: [{ uri: WIDGET_URI, mimeType: WIDGET_MIME, text: ARTIFACT_WIDGET_HTML }],
+        contents: [
+          { uri: WIDGET_URI, mimeType: WIDGET_MIME, text: ARTIFACT_WIDGET_HTML, _meta: widgetMeta },
+        ],
+        _meta: widgetMeta,
       })
     );
   }
