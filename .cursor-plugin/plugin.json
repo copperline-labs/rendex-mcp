@@ -1,8 +1,8 @@
 {
   "name": "rendex",
   "displayName": "Rendex",
-  "version": "1.4.0",
-  "description": "Rendering API for AI agents. Render any URL, raw HTML, or Markdown to PNG, JPEG, WebP, or PDF, and extract clean reader-mode content. Two tools: rendex_screenshot and rendex_extract. Free tier included.",
+  "version": "1.5.1",
+  "description": "Rendering API for AI agents. Render any URL, raw HTML, or Markdown to PNG, JPEG, WebP, PDF, or a branded PDF+PNG artifact with a hosted share link; extract clean reader-mode content; and monitor pages for changes. 13 MCP tools, OAuth or static API key. Free tier included.",
   "author": {
     "name": "Copperline Labs",
     "email": "support@rendex.dev"
@@ -18,8 +18,11 @@
     "screenshot",
     "pdf",
     "html-to-image",
+    "html-to-pdf",
     "markdown-to-image",
+    "branded-pdf",
     "content-extraction",
+    "website-monitoring",
     "ai-agent"
   ],
   "category": "developer-tools",
