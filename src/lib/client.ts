@@ -108,6 +108,42 @@ export interface RenderLinkResult {
   cacheTtl: number;
 }
 
+// ─── Agent-ready artifact (POST /v1/artifact) ────────────────────────
+export interface ArtifactBranding {
+  logo?: string;
+  accentColor?: string;
+  font?: string;
+  header?: string;
+  footer?: string;
+}
+
+export interface ArtifactPageSetup {
+  size?: "A4" | "Letter" | "Legal" | "Tabloid" | "A3";
+  orientation?: "portrait" | "landscape";
+  margin?: { top?: string; right?: string; bottom?: string; left?: string };
+  scale?: number;
+  width?: number;
+  height?: number;
+  fullPage?: boolean;
+}
+
+export interface ArtifactParams {
+  content: string;
+  inputFormat?: "markdown" | "html";
+  formats?: ("pdf" | "png")[];
+  branding?: ArtifactBranding;
+  pageSetup?: ArtifactPageSetup;
+  data?: Record<string, unknown>;
+  expiresIn?: number;
+}
+
+export interface ArtifactResult {
+  pdfUrl?: string;
+  pngUrl?: string;
+  shareUrl: string;
+  expiresAt: string;
+}
+
 // ─── Rendex Watch (website-change monitoring) ────────────────────────
 
 export interface WatchRenderParams {
@@ -315,6 +351,10 @@ export class RendexClient {
 
   async renderLink(params: ScreenshotParams & { expiresIn?: number }): Promise<RenderLinkResult> {
     return this.request<RenderLinkResult>("POST", "/v1/render/link", params);
+  }
+
+  async artifact(params: ArtifactParams): Promise<ArtifactResult> {
+    return this.request<ArtifactResult>("POST", "/v1/artifact", params);
   }
 
   // ─── Rendex Watch ──────────────────────────────────────────────────

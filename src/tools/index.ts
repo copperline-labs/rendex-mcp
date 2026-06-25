@@ -16,6 +16,13 @@ export {
   handleExtract,
 } from "./extract.js";
 export type { ExtractInput } from "./extract.js";
+export {
+  ARTIFACT_NAME,
+  ARTIFACT_DESCRIPTION,
+  ArtifactInputSchema,
+  handleArtifact,
+} from "./artifact.js";
+export type { ArtifactInput } from "./artifact.js";
 
 // ─── Rendex Watch ──
 export {

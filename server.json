@@ -16,8 +16,8 @@
       "headers": [
         {
           "name": "Authorization",
-          "description": "Bearer API key from rendex.dev dashboard",
-          "isRequired": true,
+          "description": "Optional: a static 'Bearer rdx_<key>' from the rendex.dev dashboard. Zero-config clients (Claude, ChatGPT) can instead use the built-in OAuth 2.1 (auth-code + PKCE) flow — no header needed.",
+          "isRequired": false,
           "isSecret": true
         }
       ]
