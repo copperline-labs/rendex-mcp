@@ -65,15 +65,19 @@ export async function mintManagedKey(
 }
 
 /**
- * Re-stamp a managed key's meta.plan after a plan change detected on reconnect.
- * updateKey REPLACES the whole meta object, so read-merge-write to preserve the
- * other meta fields (product/flagged/source). Best-effort: a transient Unkey
- * failure shouldn't block the connect (the per-user credit pool + identity rate
- * limit already track the plan independently).
+ * Re-stamp a managed key after a plan change detected on reconnect: both its
+ * meta.plan (gates paid features on api.rendex.dev) AND the per-user identity
+ * rate limit. mint sets the identity limit by plan, so an upgrade must move it
+ * too — otherwise the caller stays throttled at the OLD plan's per-minute limit
+ * until the authoritative Stripe-webhook key sync runs. updateKey REPLACES the
+ * whole meta object, so read-merge-write to preserve the other meta fields
+ * (product/flagged/source). Best-effort: a transient Unkey failure shouldn't
+ * block the connect; the webhook sync is the authoritative correction.
  */
 export async function updateManagedKeyPlan(
   rootKey: string,
   keyId: string,
+  userId: string,
   plan: string
 ): Promise<void> {
   const unkey = new Unkey({ rootKey });
@@ -85,4 +89,22 @@ export async function updateManagedKeyPlan(
     // Fall through with the new plan only.
   }
   await unkey.keys.updateKey({ keyId, meta: { ...meta, plan } });
+
+  // Re-pool the per-minute identity rate limit to the new plan (mirrors mint).
+  const limit = PLAN_RATE_LIMITS[plan] ?? PLAN_RATE_LIMITS.free;
+  const ratelimits = [{ name: "requests", limit, duration: 60_000, autoApply: true }];
+  try {
+    await unkey.identities.updateIdentity({ identity: userId, ratelimits });
+  } catch {
+    await unkey.keys.updateKey({ keyId, ratelimits }).catch(() => {});
+  }
+}
+
+/**
+ * Revoke (delete) a managed key. Used to clean up a freshly-minted key we could
+ * NOT persist, so it never lingers as an untracked, billable credential.
+ */
+export async function revokeManagedKey(rootKey: string, keyId: string): Promise<void> {
+  const unkey = new Unkey({ rootKey });
+  await unkey.keys.deleteKey({ keyId });
 }

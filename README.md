@@ -41,9 +41,15 @@ Add a `.mcp.json` to your project root with the same config above. Then restart 
 
 > **Important**: Add `.mcp.json` to your `.gitignore` — it contains your API key.
 
-### Remote (zero-install)
+### Remote (zero-install, OAuth or API key)
 
-Connect directly — no installation needed (Claude Desktop only):
+Connect to the hosted server at `https://mcp.rendex.dev/mcp` — no install needed.
+It's fronted by **OAuth 2.1** (authorization-code + PKCE S256), so OAuth-capable
+clients (ChatGPT, Claude, Cursor, the MCP Inspector) connect with **no API key** —
+you sign in with a one-time email code and each caller bills against their own
+Rendex plan and credit pool.
+
+Clients that prefer a static key can still pass one directly:
 
 ```json
 {
@@ -140,9 +146,42 @@ Extract clean reader-mode content from any webpage as Markdown, JSON, or HTML. R
 | `waitUntil` | string | `"networkidle2"` | Page readiness: `load`, `domcontentloaded`, `networkidle0`, `networkidle2` |
 | `timeout` | number | `30` | Max seconds to wait for page load (5-60) |
 
+### `rendex_render_link`
+
+Render a URL, raw HTML, or Markdown and get back a **signed, hosted, edge-cached image URL** instead of the bytes — ideal for dynamic OG images. Drop the URL into `<meta property="og:image">` or an `<img>` tag and Rendex serves a cached copy on every share. Takes the **same parameters as `rendex_screenshot`**, plus an optional `expiresIn`. Returns `{ url, expiresAt, format, cacheTtl }`.
+
+```
+"Make me a hosted OG-image URL for this Markdown release note"
+"Give me a render link for this HTML card that I can drop into og:image"
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| *(all `rendex_screenshot` params)* | — | — | Same source (`url`/`html`/`markdown`), format, sizing, and templating options |
+| `expiresIn` | number | server TTL | Seconds until the signed URL expires (60–2592000) |
+
+### `render_artifact`
+
+Turn Markdown or HTML into a **branded, downloadable artifact — a PDF, a PNG, and a hosted share page — in one call**. Ideal for agent outputs: reports, invoices, summaries, release notes, dashboards. Apply a logo, accent color, font, header, and footer; choose PDF page size/orientation/margins. Returns hosted URLs `{ pdfUrl, pngUrl, shareUrl, expiresAt }` — no storage needed on your side. **Each requested format costs 1 render credit.**
+
+```
+"Turn this Markdown report into a branded PDF and PNG with our logo and an orange accent"
+"Render this invoice HTML to a PDF and give me a share link that expires in a week"
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `content` | string | required | The Markdown or HTML body to render (up to ~4MB) |
+| `inputFormat` | `"markdown"` \| `"html"` | `"markdown"` | How to interpret `content` — `markdown` is converted to styled HTML; `html` is used as a body fragment |
+| `formats` | `("pdf" \| "png")[]` | `["pdf","png"]` | Which formats to produce. Each costs 1 credit |
+| `branding` | object | — | `{ logo, accentColor, font, header, footer }` — theme applied to the artifact |
+| `pageSetup` | object | — | `{ size, orientation, margin{top,right,bottom,left}, scale, width, height, fullPage }` |
+| `data` | object | — | Mustache data — when set, `content` is rendered as a logic-less Mustache template (plus `{{logo}}`/`{{header}}`/… from `branding`) before conversion |
+| `expiresIn` | number | `86400` | Seconds until the hosted URLs expire (3600–2592000). Default 24h |
+
 ### Rendex Watch
 
-Monitor a URL on a schedule and get notified when it changes — real-Chrome **visual diff** (with a highlighted overlay), an extracted-**text** diff, or **both**. Seven tools let an agent set up, inspect, and tear down watches on the shared Rendex platform (one `rdx_` key, one credit pool).
+Monitor a URL on a schedule and get notified when it changes — real-Chrome **visual diff** (with a highlighted overlay), an extracted-**text** diff, or **both**. Eight tools let an agent set up, inspect, edit, and tear down watches on the shared Rendex platform (one `rdx_` key, one credit pool).
 
 ```
 "Watch https://example.com/pricing for visual changes and alert my webhook"
@@ -158,9 +197,21 @@ Monitor a URL on a schedule and get notified when it changes — real-Chrome **v
 | `watch_get` | Fetch one watch (+ baseline URL) | `id` |
 | `watch_run` | Run a check now (1 credit) | `id` |
 | `watch_runs` | Run history with signed before/after/overlay URLs | `id`, `cursor?`, `limit?` |
+| `watch_update` | Edit a watch in place — interval, diff mode, channels, render params | `id`, plus any `watch_create` field; `webhookUrl`/`notifyEmail` accept `null` to clear a channel |
 | `watch_delete` | Delete a watch + its runs | `id` |
 
 `renderParams` carries the per-check capture knobs (`fullPage` defaults to **true**, `selector`, `device`, `geo` (Pro+), plus noise controls `ignoreRegions`/`ignoreText`/`minTextChars`/`suppressWhilePresent` and `uaMode`). Interval floors are per-plan (Free 1440 / Starter 180 / Pro 30 / Enterprise 5). Watch metadata + signed image URLs are returned as JSON text.
+
+### `rendex_account`
+
+Check the account from inside the agent: which plan it's on, how many render credits have been used this month vs. the limit (and when it resets), the per-minute rate limit, and a one-tap upgrade link. Lets an agent answer "how much have I used?" or "how do I get more renders?" without sending the user to the dashboard. **Read-only — costs no credits.**
+
+```
+"How many Rendex renders do I have left this month?"
+"What plan am I on, and how do I upgrade for more?"
+```
+
+Returns `{ plan, usage: { used, limit, remaining, unlimited, resetsAt }, rateLimitPerMinute, upgrade: { recommendedPlan, recommendedPlanCredits, upgradeUrl, manageBillingUrl } }`.
 
 ## Data templating
 

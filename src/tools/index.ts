@@ -23,6 +23,13 @@ export {
   handleArtifact,
 } from "./artifact.js";
 export type { ArtifactInput } from "./artifact.js";
+export {
+  ACCOUNT_NAME,
+  ACCOUNT_DESCRIPTION,
+  AccountInputSchema,
+  handleAccount,
+} from "./account.js";
+export type { AccountInput } from "./account.js";
 
 // ─── Rendex Watch ──
 export {

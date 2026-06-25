@@ -48,13 +48,20 @@ export async function verifyLoginCode(
   return { user: { userId: user.id, email: user.email ?? email } };
 }
 
-/** Read the user's plan (mirror of users.plan); defaults to "free". */
+/** Read the user's plan (mirror of users.plan); "free" only when the row is genuinely absent. */
 export async function getUserPlan(env: Env, userId: string): Promise<string> {
-  const { data } = await serviceClient(env)
+  const { data, error } = await serviceClient(env)
     .from("users")
     .select("plan")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
+  // Distinguish a real read failure from a legitimately-absent row. A new user's
+  // public.users row is trigger-created on signup (003_auth_trigger.sql), so "no
+  // row" means free. A transient DB/network error must NOT silently fall open to
+  // "free" — that would mint a free-stamped managed key for a PAYING user (and
+  // throttle + under-provision them until a later reconnect re-stamps). Throw so
+  // resolveManagedCredential surfaces "try again" instead.
+  if (error) throw new Error(`getUserPlan read failed: ${error.message}`);
   return (data?.plan as string | undefined) ?? "free";
 }
 

@@ -10,7 +10,9 @@ export const TOOL_DESCRIPTION =
   "Supports full-page capture, dark mode, ad blocking, custom viewports, " +
   "CSS/JS injection, cookie/header injection, PDF output, HTML and Markdown rendering, " +
   "and progressive fallback for heavy sites. Returns partial renders on " +
-  "timeout by default (bestAttempt mode).";
+  "timeout by default (bestAttempt mode). " +
+  "Costs 1 render credit per call. Cookie/header injection requires Starter+; " +
+  "geo-targeting requires Pro+.";
 
 export const ScreenshotInputSchema = z.object({
   // Source — provide exactly one of url, html, or markdown
@@ -411,7 +413,8 @@ export const RENDER_LINK_DESCRIPTION =
   "instead of the bytes — ideal for dynamic OG images: drop the URL into " +
   '<meta property="og:image"> or an <img> tag and Rendex serves a cached copy on every share. ' +
   "Takes the same options as rendex_screenshot, plus an optional expiresIn. Returns " +
-  "{ url, expiresAt, format, cacheTtl } as JSON.";
+  "{ url, expiresAt, format, cacheTtl } as JSON. " +
+  "Costs 1 render credit per fresh render; cached repeat hits don't re-charge.";
 
 export const RenderLinkInputSchema = ScreenshotInputSchema.extend({
   expiresIn: z

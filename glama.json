@@ -1,6 +1,6 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
   "name": "rendex-mcp",
-  "description": "Render HTML, Markdown, or URLs to images or PDF, and extract clean Markdown, JSON, or HTML from any page. Supports Mustache data templating, batch capture, async webhooks, device presets, geo-targeting, and CSS/JS injection. Two tools: rendex_screenshot and rendex_extract.",
+  "description": "Render HTML, Markdown, or URLs to images or PDF, extract clean Markdown/JSON/HTML from any page, compose branded PDF+PNG artifacts with a hosted share link, and monitor pages for visual/text changes. Supports Mustache data templating, batch capture, async webhooks, device presets, geo-targeting, and CSS/JS injection. 13 tools (rendex_screenshot, rendex_extract, rendex_render_link, render_artifact, rendex_account, and 8 Rendex Watch tools). Remote server (mcp.rendex.dev) is fronted by OAuth 2.1 (auth-code + PKCE) with a static Bearer rdx_ fast path; per-caller billing.",
   "maintainers": ["copperline-labs"]
 }

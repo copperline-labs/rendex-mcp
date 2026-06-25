@@ -21,7 +21,7 @@ const ERROR_MESSAGES: Record<string, (original: string) => string> = {
   RATE_LIMITED: () =>
     "Rate limit exceeded. Wait a moment and try again, or upgrade your plan at https://rendex.dev/pricing",
   USAGE_EXCEEDED: () =>
-    "Monthly usage limit reached. Upgrade your plan at https://rendex.dev/dashboard/billing",
+    "Monthly usage limit reached. Upgrade your plan in one click at https://rendex.dev/pricing",
   VALIDATION_ERROR: (msg) => `Invalid parameters: ${msg}`,
   INVALID_URL: (msg) => `Invalid URL: ${msg}`,
   INVALID_JSON: (msg) => msg,

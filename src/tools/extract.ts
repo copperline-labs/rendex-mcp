@@ -10,7 +10,8 @@ export const EXTRACT_TOOL_DESCRIPTION =
   "Runs the same Chromium render pass as a screenshot, so it captures content after " +
   "JavaScript runs — handles SPAs that fetch-only readers miss. Strips nav, ads, and " +
   "boilerplate, returning the article body plus title, byline, and excerpt. " +
-  "Great for feeding page content to an LLM, summarization, or RAG ingestion.";
+  "Great for feeding page content to an LLM, summarization, or RAG ingestion. " +
+  "Costs 1 render credit per call.";
 
 export const ExtractInputSchema = z.object({
   url: z

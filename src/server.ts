@@ -20,6 +20,10 @@ import {
   ARTIFACT_DESCRIPTION,
   ArtifactInputSchema,
   handleArtifact,
+  ACCOUNT_NAME,
+  ACCOUNT_DESCRIPTION,
+  AccountInputSchema,
+  handleAccount,
   WATCH_CREATE_NAME,
   WATCH_CREATE_DESCRIPTION,
   WatchCreateInputSchema,
@@ -118,6 +122,17 @@ export function createRendexServer(
     ...(opts.widgets ? { _meta: { "openai/outputTemplate": WIDGET_URI } } : {}),
   }, async (params) => {
     return handleArtifact(client, params);
+  });
+
+  // rendex_account: read-only plan + usage + one-tap upgrade link. Touches only
+  // the caller's own Rendex account (no external URLs); costs no credits.
+  server.registerTool(ACCOUNT_NAME, {
+    title: "Check Plan & Usage",
+    description: ACCOUNT_DESCRIPTION,
+    inputSchema: AccountInputSchema.shape,
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async () => {
+    return handleAccount(client);
   });
 
   // ─── Rendex Watch ──

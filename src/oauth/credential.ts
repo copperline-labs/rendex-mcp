@@ -13,7 +13,7 @@
 import type { Env } from "./props.js";
 import { decryptSecret, encryptSecret } from "./crypto.js";
 import { getMcpCredential, getUserPlan, saveMcpCredential, updateMcpCredentialPlan } from "./supabase.js";
-import { mintManagedKey, updateManagedKeyPlan } from "./unkey.js";
+import { mintManagedKey, revokeManagedKey, updateManagedKeyPlan } from "./unkey.js";
 
 export interface ResolvedCredential {
   apiKey: string;
@@ -37,7 +37,7 @@ export async function resolveManagedCredential(
       // Stripe-webhook key sync — see syncUnkeyKeysForUser — which corrects the
       // key even without a reconnect; this only narrows the window.)
       if (existing.plan !== plan) {
-        await updateManagedKeyPlan(env.UNKEY_ROOT_KEY, existing.unkey_key_id, plan).catch(() => {});
+        await updateManagedKeyPlan(env.UNKEY_ROOT_KEY, existing.unkey_key_id, userId, plan).catch(() => {});
         await updateMcpCredentialPlan(env, userId, plan).catch(() => {});
       }
       return { apiKey, plan };
@@ -52,17 +52,22 @@ export async function resolveManagedCredential(
   const encrypted = await encryptSecret(minted.key, env.MCP_KEY_ENCRYPTION_KEY);
   const saved = await saveMcpCredential(env, userId, minted.keyId, encrypted, minted.keyHint, plan);
   if (!saved.ok) {
-    // The key works regardless of the DB write — return it so this session
-    // proceeds; a later connect re-mints if the row is still missing.
+    // We could not persist the credential, so we can never look it up or reuse
+    // it again — leaving it live would accrue an untracked, billable Unkey key
+    // on every reconnect during a DB-write outage. Revoke it and fail closed;
+    // the user retries once the write path recovers. (Reverses the earlier
+    // "proceed on persist failure" choice in favor of billing hygiene.)
+    await revokeManagedKey(env.UNKEY_ROOT_KEY, minted.keyId).catch(() => {});
     console.log(
       JSON.stringify({
-        level: "warn",
+        level: "error",
         event: "mcp_credential_persist_failed",
         userId,
         error: saved.error,
         timestamp: new Date().toISOString(),
       })
     );
+    throw new Error(`Failed to persist managed credential: ${saved.error ?? "unknown"}`);
   }
   return { apiKey: minted.key, plan };
 }

@@ -279,6 +279,24 @@ export interface WatchRunList {
   nextCursor: string | null;
 }
 
+export interface AccountResult {
+  plan: "free" | "starter" | "pro" | "enterprise";
+  usage: {
+    used: number | null;
+    limit: number | null;
+    remaining: number | null;
+    unlimited: boolean;
+    resetsAt: string | null;
+  };
+  rateLimitPerMinute: number;
+  upgrade: {
+    recommendedPlan: "starter" | "pro" | "enterprise";
+    recommendedPlanCredits: number | null;
+    upgradeUrl: string;
+    manageBillingUrl: string;
+  } | null;
+}
+
 interface ApiSuccessResponse<T> {
   success: true;
   data: T;
@@ -355,6 +373,10 @@ export class RendexClient {
 
   async artifact(params: ArtifactParams): Promise<ArtifactResult> {
     return this.request<ArtifactResult>("POST", "/v1/artifact", params);
+  }
+
+  async account(): Promise<AccountResult> {
+    return this.request<AccountResult>("GET", "/v1/account");
   }
 
   // ─── Rendex Watch ──────────────────────────────────────────────────
