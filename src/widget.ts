@@ -115,7 +115,20 @@ export const RENDER_PREVIEW_HTML = `<!DOCTYPE html>
         if (imgs.length) {
           for (var j = 0; j < imgs.length; j++) figSlot.appendChild(figure(imgs[j].url, imgs[j].label));
         } else {
-          figSlot.appendChild(el("div", "rx-empty", "Your render is ready. Use the buttons below to open or download it."));
+          // No image. If we already have action links it's a real result (e.g.
+          // pdf-only) → say it's ready. If we have NOTHING yet, the tool is still
+          // running — the widget renders before toolOutput arrives, so don't claim
+          // "ready" mid-call (it re-renders via openai:set_globals when done).
+          var hasLinks = safeUrl(out.pdfUrl) || safeUrl(out.pngUrl) || safeUrl(out.shareUrl) || safeUrl(out.openUrl);
+          figSlot.appendChild(
+            el(
+              "div",
+              "rx-empty",
+              hasLinks
+                ? "Your render is ready. Use the buttons below to open or download it."
+                : "Rendering… this usually takes a few seconds."
+            )
+          );
         }
 
         if (out.note) noteSlot.appendChild(el("div", "rx-note", String(out.note)));
