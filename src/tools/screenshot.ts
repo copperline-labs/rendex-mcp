@@ -4,6 +4,16 @@ import { z } from "zod";
 import { RendexClient, RendexApiError, type ScreenshotParams } from "../lib/client.js";
 import { asStructured, hostedRenderPreview } from "../lib/preview.js";
 
+// Forgive a schemeless host ("example.com" → "https://example.com") before
+// .url() validates, so a common agent input doesn't hard-fail (mirrors the API +
+// the Watch tools, which already do this).
+export function prependHttps(v: unknown): unknown {
+  if (typeof v === "string" && v !== "" && !/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(v)) {
+    return `https://${v}`;
+  }
+  return v;
+}
+
 export const TOOL_NAME = "rendex_screenshot";
 
 export const TOOL_DESCRIPTION =
@@ -18,10 +28,9 @@ export const TOOL_DESCRIPTION =
 export const ScreenshotInputSchema = z.object({
   // Source — provide exactly one of url, html, or markdown
   url: z
-    .string()
-    .url()
+    .preprocess(prependHttps, z.string().url())
     .optional()
-    .describe("The webpage URL to capture. Mutually exclusive with 'html' and 'markdown'."),
+    .describe("The webpage URL to capture (a schemeless host like 'example.com' is accepted). Mutually exclusive with 'html' and 'markdown'."),
   html: z
     .string()
     .max(5_242_880)

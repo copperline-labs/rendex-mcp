@@ -188,7 +188,11 @@ function errorResult(err: unknown, fallback: string) {
 
 export async function handleWatchCreate(client: RendexClient, params: WatchCreateInput) {
   try {
-    return jsonText(await client.watchCreate(params as CreateWatchParams));
+    const w = await client.watchCreate(params as CreateWatchParams);
+    const summary =
+      `Created watch ${w.name ? `'${w.name}' ` : ""}on ${w.url}, checking every ${w.intervalMinutes} min ` +
+      `(${w.diffMode} diff)${w.status === "active" ? "; baseline capturing now" : "; paused"}. ID ${w.id}.`;
+    return { content: [{ type: "text" as const, text: `${summary}\n\n${JSON.stringify(w, null, 2)}` }] };
   } catch (err) {
     return errorResult(err, "Unknown error creating watch");
   }
@@ -225,9 +229,21 @@ export async function handleWatchList(client: RendexClient, params: WatchListInp
   }
 }
 
-export async function handleWatchGet(client: RendexClient, params: WatchGetInput) {
+export async function handleWatchGet(client: RendexClient, params: WatchGetInput, preview = false) {
   try {
-    return jsonText(await client.watchGet(params.id));
+    const w = await client.watchGet(params.id);
+    if (preview && w.baselineImageUrl) {
+      return {
+        ...jsonText(w),
+        structuredContent: asStructured({
+          title: `Watch · ${w.name ?? w.url}`,
+          imageUrl: w.baselineImageUrl,
+          openUrl: w.baselineImageUrl,
+          note: `Status: ${w.status}; baseline captured ${w.baselineCapturedAt ?? "—"}.`,
+        }),
+      };
+    }
+    return jsonText(w);
   } catch (err) {
     return errorResult(err, "Unknown error fetching watch");
   }

@@ -124,7 +124,9 @@ export function createRendexServer(
     title: "Render Branded Artifact (PDF + PNG)",
     description: ARTIFACT_DESCRIPTION,
     inputSchema: ArtifactInputSchema.shape,
-    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    // openWorld: the composed page can fetch an external branding.logo + any
+    // <img>/resource in caller HTML, so it does touch the open web.
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     ...widgetMeta,
   }, async (params) => {
     return handleArtifact(client, params);
@@ -169,7 +171,8 @@ export function createRendexServer(
     description: WATCH_GET_DESCRIPTION,
     inputSchema: WatchGetInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (params) => handleWatchGet(client, params));
+    ...widgetMeta,
+  }, async (params) => handleWatchGet(client, params, opts.widgets));
 
   server.registerTool(WATCH_RUN_NAME, {
     title: "Run Watch Now",

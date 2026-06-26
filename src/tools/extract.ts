@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { RendexClient, RendexApiError } from "../lib/client.js";
+import { prependHttps } from "./screenshot.js";
 
 export const EXTRACT_TOOL_NAME = "rendex_extract";
 
@@ -15,9 +16,8 @@ export const EXTRACT_TOOL_DESCRIPTION =
 
 export const ExtractInputSchema = z.object({
   url: z
-    .string()
-    .url()
-    .describe("The webpage URL to extract readable content from."),
+    .preprocess(prependHttps, z.string().url())
+    .describe("The webpage URL to extract readable content from (a schemeless host like 'example.com' is accepted)."),
   extractFormat: z
     .enum(["markdown", "json", "html"])
     .default("markdown")
