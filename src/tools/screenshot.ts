@@ -263,32 +263,10 @@ export const ScreenshotInputSchema = z.object({
     .optional()
     .describe("PDF page margins. Only used when format='pdf'. Accepts CSS values."),
 
-  // Async pipeline
-  async: z
-    .boolean()
-    .optional()
-    .describe(
-      "Process capture asynchronously. Returns a jobId immediately instead of waiting. " +
-      "Poll GET /v1/jobs/:jobId for status, or use webhookUrl for push notification."
-    ),
-  webhookUrl: z
-    .string()
-    .url()
-    .optional()
-    .describe(
-      "URL to receive a POST callback when async capture completes. " +
-      "Payload is HMAC-SHA256 signed. Requires async=true."
-    ),
-  cacheTtl: z
-    .number()
-    .int()
-    .min(3600)
-    .max(2592000)
-    .optional()
-    .describe(
-      "Seconds to cache the result in R2 storage (3600-2592000). " +
-      "Returns a signed URL for retrieval. Requires async=true."
-    ),
+  // NOTE: async / webhookUrl / cacheTtl are intentionally NOT exposed over MCP.
+  // There is no job-polling MCP tool, so async:true would return a jobId the
+  // agent can't use (the client would mis-read the queued envelope as an empty
+  // image). MCP capture is synchronous; use rendex_render_link for a hosted URL.
 
   // Mustache data templating
   data: z

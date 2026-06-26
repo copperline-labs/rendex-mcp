@@ -30,7 +30,7 @@ export const RENDER_PREVIEW_HTML = `<!DOCTYPE html>
   .rx-title { padding: 12px 16px 0; font-size: 14px; font-weight: 600; }
   .rx-figure { padding: 12px 16px 0; }
   .rx-label { font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .rx-preview { display: block; width: 100%; height: auto; border-radius: 8px; background: #f6f8fa; border: 1px solid #e5e7eb; }
+  .rx-preview { display: block; width: 100%; height: auto; max-height: 70vh; object-fit: contain; border-radius: 8px; background: #f6f8fa; border: 1px solid #e5e7eb; }
   .rx-empty { margin: 12px 16px 0; padding: 22px; color: #6b7280; font-size: 14px; text-align: center; background: #f6f8fa; border: 1px solid #e5e7eb; border-radius: 8px; }
   .rx-note { padding: 10px 16px 0; font-size: 13px; color: #4b5563; }
   .rx-actions { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 16px; align-items: center; }
@@ -82,6 +82,9 @@ export const RENDER_PREVIEW_HTML = `<!DOCTYPE html>
         if (label) wrap.appendChild(el("div", "rx-label", label));
         var img = el("img", "rx-preview");
         img.alt = label || "Rendex render";
+        img.onerror = function () {
+          wrap.replaceWith(el("div", "rx-empty", "Preview unavailable — the link may have expired. Use the buttons below to open or download."));
+        };
         img.setAttribute("src", url);
         wrap.appendChild(img);
         return wrap;

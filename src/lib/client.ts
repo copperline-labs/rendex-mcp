@@ -1,6 +1,6 @@
 // ─── HTTP Client for Rendex REST API ─────────────────────────────────
 
-import { formatApiError, httpStatusToContext } from "./errors.js";
+import { formatApiError, nonJsonError } from "./errors.js";
 import type { RendexRestError } from "./errors.js";
 
 const API_BASE = "https://api.rendex.dev";
@@ -327,8 +327,29 @@ export class RendexClient {
     this.baseUrl = baseUrl ?? API_BASE;
   }
 
+  // Fail FAST instead of hanging. The API bounds a render at ~60s, so a call
+  // still pending past ~65s is a stalled socket — abort it and return a terminal
+  // error so the agent doesn't hang or silently retry-loop. (No client deadline
+  // existed before; the `timeout` param is only the upstream page-load budget.)
+  private async fetchWithTimeout(url: string, init: RequestInit, ms = 65_000): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new RendexApiError(
+          `The request exceeded ${Math.round(ms / 1000)}s and was aborted. Try a simpler request (a single format, a shorter timeout, or bestAttempt=true). Do not retry immediately.`
+        );
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async screenshot(params: ScreenshotParams): Promise<ScreenshotResponse> {
-    const response = await fetch(`${this.baseUrl}/v1/screenshot/json`, {
+    const response = await this.fetchWithTimeout(`${this.baseUrl}/v1/screenshot/json`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -338,17 +359,16 @@ export class RendexClient {
       body: JSON.stringify(params),
     });
 
-    const body = (await response.json()) as ApiResponse<ScreenshotResponse>;
-
-    if (body.success) {
-      return body.data;
+    const body = (await response.json().catch(() => null)) as ApiResponse<ScreenshotResponse> | null;
+    if (body && body.success) return body.data;
+    if (body && body.success === false) {
+      throw new RendexApiError(formatApiError(response.status, body.error, response.headers.get("retry-after")));
     }
-
-    throw new RendexApiError(formatApiError(response.status, body.error));
+    throw new RendexApiError(nonJsonError(response));
   }
 
   async extract(params: ExtractParams): Promise<ExtractResponse> {
-    const response = await fetch(`${this.baseUrl}/v1/extract`, {
+    const response = await this.fetchWithTimeout(`${this.baseUrl}/v1/extract`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -358,13 +378,12 @@ export class RendexClient {
       body: JSON.stringify(params),
     });
 
-    const body = (await response.json()) as ApiResponse<ExtractResponse>;
-
-    if (body.success) {
-      return body.data;
+    const body = (await response.json().catch(() => null)) as ApiResponse<ExtractResponse> | null;
+    if (body && body.success) return body.data;
+    if (body && body.success === false) {
+      throw new RendexApiError(formatApiError(response.status, body.error, response.headers.get("retry-after")));
     }
-
-    throw new RendexApiError(formatApiError(response.status, body.error));
+    throw new RendexApiError(nonJsonError(response));
   }
 
   async renderLink(params: ScreenshotParams & { expiresIn?: number }): Promise<RenderLinkResult> {
@@ -422,7 +441,7 @@ export class RendexClient {
     };
     if (body !== undefined) headers["Content-Type"] = "application/json";
 
-    const response = await fetch(`${this.baseUrl}${path}`, {
+    const response = await this.fetchWithTimeout(`${this.baseUrl}${path}`, {
       method,
       headers,
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
@@ -435,9 +454,9 @@ export class RendexClient {
     if (parsed && parsed.success) return parsed.data;
 
     if (parsed && parsed.success === false) {
-      throw new RendexApiError(formatApiError(response.status, parsed.error));
+      throw new RendexApiError(formatApiError(response.status, parsed.error, response.headers.get("retry-after")));
     }
-    throw new RendexApiError(`${httpStatusToContext(response.status)}: HTTP ${response.status}`);
+    throw new RendexApiError(nonJsonError(response));
   }
 
   private qs(query?: ListWatchesQuery | ListWatchRunsQuery): string {
