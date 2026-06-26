@@ -44,6 +44,16 @@ const provider = new OAuthProvider<Env>({
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+
+    // OpenAI Apps domain verification — serve the challenge token at the well-known
+    // path so ChatGPT can confirm we control mcp.rendex.dev. This is a public
+    // verification value (not a secret), safe to serve as-is.
+    if (url.pathname === "/.well-known/openai-apps-challenge") {
+      return new Response("lELVsFB2HRpum3rs0NwknefCBpHmLnLJZbaWmb-fu_Q", {
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
+
     if (url.pathname === "/mcp") {
       const accept = request.headers.get("accept") ?? "";
       if (request.method === "GET") {
