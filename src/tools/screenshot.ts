@@ -1,7 +1,8 @@
 // ─── rendex_screenshot Tool ──────────────────────────────────────────
 
 import { z } from "zod";
-import { RendexClient, RendexApiError } from "../lib/client.js";
+import { RendexClient, RendexApiError, type ScreenshotParams } from "../lib/client.js";
+import { asStructured, hostedRenderPreview } from "../lib/preview.js";
 
 export const TOOL_NAME = "rendex_screenshot";
 
@@ -328,9 +329,33 @@ export type ScreenshotInput = z.infer<typeof ScreenshotInputSchema>;
 
 export async function handleScreenshot(
   client: RendexClient,
-  params: ScreenshotInput
+  params: ScreenshotInput,
+  preview = false
 ) {
   try {
+    if (preview) {
+      // ChatGPT/remote: return a HOSTED render URL + structuredContent so the
+      // render-preview widget shows the capture inline with download/open actions
+      // (ChatGPT Apps doesn't inline-render the raw image bytes stdio clients use).
+      const link = await client.renderLink(params as unknown as ScreenshotParams);
+      const target = params.url ?? "your content";
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Captured a ${link.format} of ${target}. Preview + download are shown above. Hosted link (expires ${link.expiresAt}): ${link.url}`,
+          },
+        ],
+        structuredContent: asStructured(
+          hostedRenderPreview({
+            url: link.url,
+            format: link.format,
+            expiresAt: link.expiresAt,
+            title: `Screenshot${params.url ? " of " + params.url : ""}`,
+          })
+        ),
+      };
+    }
     const result = await client.screenshot(params);
 
     const isPdf = result.format === "pdf";
@@ -430,12 +455,26 @@ export type RenderLinkInput = z.infer<typeof RenderLinkInputSchema>;
 
 export async function handleRenderLink(
   client: RendexClient,
-  params: RenderLinkInput
+  params: RenderLinkInput,
+  preview = false
 ) {
   try {
     const result = await client.renderLink(params);
-    return {
+    const text = {
       content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+    };
+    if (!preview) return text;
+    return {
+      ...text,
+      structuredContent: asStructured(
+        hostedRenderPreview({
+          url: result.url,
+          format: result.format,
+          expiresAt: result.expiresAt,
+          title: `Render link${params.url ? " · " + params.url : ""}`,
+          note: "Hosted, edge-cached — drop this URL into an <img> tag or og:image.",
+        })
+      ),
     };
   } catch (err) {
     const message =

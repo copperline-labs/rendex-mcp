@@ -2,7 +2,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { RendexClient } from "./lib/client.js";
-import { ARTIFACT_WIDGET_HTML, WIDGET_URI, WIDGET_MIME } from "./widget.js";
+import { RENDER_PREVIEW_HTML, WIDGET_URI, WIDGET_MIME } from "./widget.js";
 import {
   TOOL_NAME,
   TOOL_DESCRIPTION,
@@ -67,6 +67,12 @@ export function createRendexServer(
 ) {
   const client = new RendexClient(apiKey, baseUrl);
 
+  // ChatGPT Apps inline preview: point every VISUAL tool at the shared
+  // render-preview widget resource (registered below). Other clients ignore this
+  // _meta key; only set it on remote transports (opts.widgets). The matching
+  // handlers also switch to hosted URLs + structuredContent when widgets is on.
+  const widgetMeta = opts.widgets ? { _meta: { "openai/outputTemplate": WIDGET_URI } } : {};
+
   const server = new McpServer({
     name: "rendex",
     version: VERSION,
@@ -87,8 +93,9 @@ export function createRendexServer(
     description: TOOL_DESCRIPTION,
     inputSchema: ScreenshotInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    ...widgetMeta,
   }, async (params) => {
-    return handleScreenshot(client, params);
+    return handleScreenshot(client, params, opts.widgets);
   });
 
   server.registerTool(EXTRACT_TOOL_NAME, {
@@ -105,8 +112,9 @@ export function createRendexServer(
     description: RENDER_LINK_DESCRIPTION,
     inputSchema: RenderLinkInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    ...widgetMeta,
   }, async (params) => {
-    return handleRenderLink(client, params);
+    return handleRenderLink(client, params, opts.widgets);
   });
 
   // render_artifact: Markdown/HTML → branded PDF + PNG + hosted share page.
@@ -117,9 +125,7 @@ export function createRendexServer(
     description: ARTIFACT_DESCRIPTION,
     inputSchema: ArtifactInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: false },
-    // ChatGPT Apps inline preview: point the tool at the widget resource below.
-    // Other clients ignore this _meta key. Only set on remote transports.
-    ...(opts.widgets ? { _meta: { "openai/outputTemplate": WIDGET_URI } } : {}),
+    ...widgetMeta,
   }, async (params) => {
     return handleArtifact(client, params);
   });
@@ -148,7 +154,8 @@ export function createRendexServer(
     description: WATCH_TEST_DESCRIPTION,
     inputSchema: WatchTestInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
-  }, async (params) => handleWatchTest(client, params));
+    ...widgetMeta,
+  }, async (params) => handleWatchTest(client, params, opts.widgets));
 
   server.registerTool(WATCH_LIST_NAME, {
     title: "List Watches",
@@ -176,7 +183,8 @@ export function createRendexServer(
     description: WATCH_RUNS_DESCRIPTION,
     inputSchema: WatchRunsInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (params) => handleWatchRuns(client, params));
+    ...widgetMeta,
+  }, async (params) => handleWatchRuns(client, params, opts.widgets));
 
   server.registerTool(WATCH_DELETE_NAME, {
     title: "Delete Watch",
@@ -203,10 +211,10 @@ export function createRendexServer(
     // loads the rendered PNG and links to the PDF/PNG/share page — all hosted on
     // api.rendex.dev. We set both the standard `ui` form and the legacy openai/*
     // keys (and the legacy redirect_domains for the open/download links).
-    const widgetMeta = {
+    const widgetResourceMeta = {
       "openai/widgetDomain": "https://rendex.dev",
       "openai/widgetDescription":
-        "Preview of a rendered Rendex artifact — a PNG preview with Download PDF/PNG and Open share-page links.",
+        "Inline preview of a Rendex render — image preview with Download PDF/PNG and Open links.",
       "openai/widgetCSP": {
         connect_domains: ["https://api.rendex.dev"],
         resource_domains: ["https://api.rendex.dev"],
@@ -221,14 +229,14 @@ export function createRendexServer(
       },
     };
     server.registerResource(
-      "artifact-preview",
+      "render-preview",
       WIDGET_URI,
-      { title: "Rendex artifact preview", mimeType: WIDGET_MIME, _meta: widgetMeta },
+      { title: "Rendex render preview", mimeType: WIDGET_MIME, _meta: widgetResourceMeta },
       async () => ({
         contents: [
-          { uri: WIDGET_URI, mimeType: WIDGET_MIME, text: ARTIFACT_WIDGET_HTML, _meta: widgetMeta },
+          { uri: WIDGET_URI, mimeType: WIDGET_MIME, text: RENDER_PREVIEW_HTML, _meta: widgetResourceMeta },
         ],
-        _meta: widgetMeta,
+        _meta: widgetResourceMeta,
       })
     );
   }

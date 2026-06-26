@@ -8,6 +8,7 @@
 import { z } from "zod";
 import { RendexClient, RendexApiError } from "../lib/client.js";
 import type { CreateWatchParams, UpdateWatchParams, ListWatchesQuery, ListWatchRunsQuery } from "../lib/client.js";
+import { asStructured } from "../lib/preview.js";
 
 // Mirror the API's URL forgiveness (screenshot-api schemas/watch-params.ts
 // prependHttps): the API normalizes a schemeless host like "rendex.dev/pricing"
@@ -193,9 +194,24 @@ export async function handleWatchCreate(client: RendexClient, params: WatchCreat
   }
 }
 
-export async function handleWatchTest(client: RendexClient, params: WatchTestInput) {
+export async function handleWatchTest(client: RendexClient, params: WatchTestInput, preview = false) {
   try {
-    return jsonText(await client.watchTest(params as CreateWatchParams));
+    const result = await client.watchTest(params as CreateWatchParams);
+    if (preview && result.screenshotUrl) {
+      return {
+        ...jsonText(result),
+        structuredContent: asStructured({
+          title: `Watch test · ${params.url}`,
+          imageUrl: result.screenshotUrl,
+          pngUrl: result.screenshotUrl,
+          openUrl: result.screenshotUrl,
+          note: result.reachable
+            ? "Reachable — this is what Rendex would capture each check."
+            : "Not reachable" + (result.reason ? ": " + result.reason : "") + ".",
+        }),
+      };
+    }
+    return jsonText(result);
   } catch (err) {
     return errorResult(err, "Unknown error testing watch config");
   }
@@ -225,10 +241,35 @@ export async function handleWatchRun(client: RendexClient, params: WatchRunInput
   }
 }
 
-export async function handleWatchRuns(client: RendexClient, params: WatchRunsInput) {
+export async function handleWatchRuns(client: RendexClient, params: WatchRunsInput, preview = false) {
   try {
     const { id, ...query } = params;
-    return jsonText(await client.watchRuns(id, query as ListWatchRunsQuery));
+    const result = await client.watchRuns(id, query as ListWatchRunsQuery);
+    const latest = result.items[0];
+    if (preview && latest) {
+      const images = [
+        { label: "Before", url: latest.beforeUrl },
+        { label: "After", url: latest.afterUrl },
+        { label: "Overlay (diff)", url: latest.diffOverlayUrl },
+      ].filter((i): i is { label: string; url: string } => typeof i.url === "string");
+      if (images.length) {
+        return {
+          ...jsonText(result),
+          structuredContent: asStructured({
+            title: `Latest run · watch ${id}`,
+            images,
+            openUrl: latest.afterUrl ?? latest.beforeUrl ?? undefined,
+            note:
+              latest.changed === true
+                ? "Change detected since the previous check."
+                : latest.changed === false
+                  ? "No change since the previous check."
+                  : `Status: ${latest.status}.`,
+          }),
+        };
+      }
+    }
+    return jsonText(result);
   } catch (err) {
     return errorResult(err, "Unknown error reading run history");
   }
