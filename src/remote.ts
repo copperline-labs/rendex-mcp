@@ -35,6 +35,30 @@ const provider = new OAuthProvider<Env>({
   allowPlainPKCE: false,
 });
 
+// JSON-RPC methods that carry no secrets and never call the Rendex API, so they
+// can be answered WITHOUT auth. Exposing discovery keyless lets directory
+// scanners (OpenAI Apps "Scan Tools", registry crawlers) enumerate the full
+// toolset without first completing the OAuth consent flow — which is the step
+// that stalls in the apps-manage popup handshake. `tools/call` is deliberately
+// NOT here: every real invocation still 401s and bills via OAuth (or the static
+// rdx_ fast path), so per-caller billing is unchanged.
+const PUBLIC_DISCOVERY_METHODS = new Set(["initialize", "notifications/initialized", "ping", "tools/list"]);
+
+/** True only for a single JSON-RPC request whose method is public discovery. */
+async function isPublicDiscovery(request: Request): Promise<boolean> {
+  try {
+    // Read a CLONE so the original body stays intact for the transport.
+    const body = (await request.clone().json()) as unknown;
+    if (body && typeof body === "object" && !Array.isArray(body)) {
+      const method = (body as { method?: unknown }).method;
+      return typeof method === "string" && PUBLIC_DISCOVERY_METHODS.has(method);
+    }
+  } catch {
+    // Non-JSON / batched / unreadable → fall through to the OAuth provider.
+  }
+  return false;
+}
+
 // The OAuthProvider validates the bearer token on /mcp and rejects anything that
 // isn't a provider-issued OAuth access token with 401 — so it would break the
 // existing static-key path (clients passing their own `Authorization: Bearer
@@ -78,6 +102,14 @@ export default {
       const auth = request.headers.get("authorization") ?? "";
       if (/^Bearer\s+rdx_/.test(auth)) {
         return runMcp(request, auth.replace(/^Bearer\s+/, ""), env.RENDEX_API_URL);
+      }
+      // Public discovery fast path: answer initialize/tools/list/ping keyless so a
+      // directory scanner can read the toolset without the OAuth dance. Runs only
+      // when there's no static rdx_ key above; tools/call is excluded, so it still
+      // reaches the provider and 401s → OAuth at call time. The empty key is never
+      // used (no tool handler runs for discovery methods).
+      if (request.method === "POST" && (await isPublicDiscovery(request))) {
+        return runMcp(request, "", env.RENDEX_API_URL);
       }
     }
     return provider.fetch(request, env, ctx);

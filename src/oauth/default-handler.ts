@@ -216,6 +216,9 @@ async function handleAuthorizePost(request: Request, env: Env): Promise<Response
     if (!sent.ok) return emailForm(sent.error ?? "Could not send a code. Try again.");
 
     await saveState(env, stateId, { ...state, email, sendCount: (state.sendCount ?? 0) + 1 });
+    // saveState only persists to KV; the codeForm closure reads the in-memory
+    // `state`, so sync it too or the "we sent a code to <email>" line renders blank.
+    state.email = email;
     return codeForm();
   }
 
