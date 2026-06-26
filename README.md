@@ -174,7 +174,11 @@ Turn Markdown or HTML into a **branded, downloadable artifact — a PDF, a PNG, 
 | `content` | string | required | The Markdown or HTML body to render (up to ~4MB) |
 | `inputFormat` | `"markdown"` \| `"html"` | `"markdown"` | How to interpret `content` — `markdown` is converted to styled HTML; `html` is used as a body fragment |
 | `formats` | `("pdf" \| "png")[]` | `["pdf","png"]` | Which formats to produce. Each costs 1 credit |
-| `branding` | object | — | `{ logo, accentColor, font, header, footer }` — theme applied to the artifact |
+| `accentColor` | string | — | CSS accent color for the bar, links, and headings (e.g. `#EA580C`) |
+| `logo` | string | — | http(s) URL of a logo image shown in the header |
+| `header` | string | — | plain-text header line shown beside the logo |
+| `footer` | string | — | plain-text footer line shown at the bottom |
+| `font` | string | — | CSS font-family stack for the body |
 | `pageSetup` | object | — | `{ size, orientation, margin{top,right,bottom,left}, scale, width, height, fullPage }` |
 | `data` | object | — | Mustache data — when set, `content` is rendered as a logic-less Mustache template (plus `{{logo}}`/`{{header}}`/… from `branding`) before conversion |
 | `expiresIn` | number | `86400` | Seconds until the hosted URLs expire (3600–2592000). Default 24h |

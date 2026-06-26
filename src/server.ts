@@ -73,10 +73,25 @@ export function createRendexServer(
   // handlers also switch to hosted URLs + structuredContent when widgets is on.
   const widgetMeta = opts.widgets ? { _meta: { "openai/outputTemplate": WIDGET_URI } } : {};
 
-  const server = new McpServer({
-    name: "rendex",
-    version: VERSION,
-  });
+  const server = new McpServer(
+    {
+      name: "rendex",
+      version: VERSION,
+    },
+    {
+      // Explicit invocation guidance — counters the model's tendency (notably on
+      // newer ChatGPT models) to DESCRIBE a tool call instead of executing it, or
+      // to hedge on indirect requests. Kept self-contained + intent→tool mapped.
+      instructions:
+        "Rendex captures, renders, and monitors web content. ALWAYS call the matching tool — never " +
+        "just describe the call or answer another way: screenshot/capture/picture of a page → " +
+        "rendex_screenshot; turn Markdown/HTML into a branded PDF+PNG+share link → render_artifact; " +
+        "read/extract a page's text → rendex_extract; a reusable hosted image URL / og:image → " +
+        "rendex_render_link; monitor a page for changes → watch_create; plan or usage → rendex_account. " +
+        "Pass the user's URL or content directly. On error, read the message: retry only if it says the " +
+        "error is transient (after the stated wait); otherwise fix the input or tell the user.",
+    }
+  );
 
   // ─── Tool annotations (MCP spec hints for agent clients) ──────────────
   // readOnlyHint    — does NOT mutate the caller's own resources (a render

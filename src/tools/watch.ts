@@ -89,7 +89,9 @@ const CreateWatchFields = {
 
 export const WATCH_CREATE_NAME = "watch_create";
 export const WATCH_CREATE_DESCRIPTION =
-  "Create a Rendex Watch — monitor a URL on a schedule and get notified when it changes " +
+  "Use this when the user asks to monitor, watch, or track a webpage for changes, or to be " +
+  "alerted/notified when a page changes. Do NOT use for a one-time capture (use rendex_screenshot). " +
+  "Creates a Rendex Watch — monitors a URL on a schedule and notifies when it changes " +
   "(real-Chrome visual diff with a highlighted overlay, an extracted-text diff, or both). " +
   "An active watch captures its baseline immediately. Returns the created watch as JSON.";
 // .strict() mirrors the API's CreateWatchSchema.strict(): an unknown top-level

@@ -10,21 +10,12 @@ import { RendexClient, RendexApiError } from "../lib/client.js";
 export const ARTIFACT_NAME = "render_artifact";
 
 export const ARTIFACT_DESCRIPTION =
-  "Turn Markdown or HTML into a branded, downloadable artifact — a PDF, a PNG, and a hosted share page — in one call. " +
-  "Ideal for agent outputs: reports, invoices, summaries, release notes, dashboards. " +
-  "Apply a logo, accent color, font, header, and footer; choose PDF page size/orientation/margins. " +
-  "Returns hosted URLs { pdfUrl, pngUrl, shareUrl, expiresAt } — no storage needed on your side. " +
+  "Use this when the user asks to make or create a branded report, invoice, summary, release notes, " +
+  "or document — or to 'turn this Markdown/HTML into a PDF and PNG' (optionally with a logo or accent color). " +
+  "Do NOT use to screenshot an existing URL (use rendex_screenshot). " +
+  "Turns Markdown or HTML into a branded, downloadable artifact — a PDF, a PNG, and a hosted share page — in one call. " +
+  "Apply a logo, accentColor, font, header, and footer. Returns hosted URLs { pdfUrl, pngUrl, shareUrl, expiresAt }. " +
   "Each requested format costs 1 render credit.";
-
-const BrandingSchema = z
-  .object({
-    logo: z.string().url().max(2048).optional().describe("Absolute http(s) URL of a logo image shown in the header."),
-    accentColor: z.string().max(64).optional().describe("CSS color for the accent bar, links, and headings (e.g. '#EA580C')."),
-    font: z.string().max(120).optional().describe("CSS font-family stack for the body (e.g. 'Georgia, serif')."),
-    header: z.string().max(2000).optional().describe("Plain-text header line shown beside the logo."),
-    footer: z.string().max(2000).optional().describe("Plain-text footer line shown at the bottom."),
-  })
-  .describe("Optional branding theme applied to the artifact.");
 
 const PageSetupSchema = z
   .object({
@@ -58,7 +49,14 @@ export const ArtifactInputSchema = z.object({
     .max(2)
     .default(["pdf", "png"])
     .describe("Which formats to produce. Each costs 1 credit. Default both."),
-  branding: BrandingSchema.optional(),
+  // Branding — FLAT top-level params (agents produce valid calls far more reliably
+  // for flat fields than for nested objects). Mapped into the API's branding object
+  // in the handler.
+  accentColor: z.string().max(64).optional().describe("CSS accent color for the bar, links, and headings (e.g. '#EA580C')."),
+  logo: z.string().url().max(2048).optional().describe("Absolute http(s) URL of a logo image shown in the header."),
+  header: z.string().max(2000).optional().describe("Plain-text header line shown beside the logo."),
+  footer: z.string().max(2000).optional().describe("Plain-text footer line shown at the bottom."),
+  font: z.string().max(120).optional().describe("CSS font-family stack for the body (e.g. 'Georgia, serif')."),
   pageSetup: PageSetupSchema.optional(),
   data: z
     .record(z.string(), z.unknown())
@@ -80,7 +78,13 @@ export type ArtifactInput = z.infer<typeof ArtifactInputSchema>;
 
 export async function handleArtifact(client: RendexClient, params: ArtifactInput) {
   try {
-    const result = await client.artifact(params);
+    // Reassemble the flat branding params into the API's nested branding object.
+    const { accentColor, logo, header, footer, font, ...rest } = params;
+    const branding =
+      accentColor || logo || header || footer || font
+        ? { accentColor, logo, header, footer, font }
+        : undefined;
+    const result = await client.artifact({ ...rest, branding });
     return {
       content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
       // ChatGPT Apps populates the preview widget's window.openai.toolOutput from
@@ -88,7 +92,7 @@ export async function handleArtifact(client: RendexClient, params: ArtifactInput
       // its frame but shows "No artifact links returned".
       structuredContent: {
         ...result,
-        title: params.branding?.header ?? "Branded artifact",
+        title: header ?? "Branded artifact",
         note:
           result.pdfUrl && result.pngUrl
             ? "Branded PDF + PNG with a hosted share page."

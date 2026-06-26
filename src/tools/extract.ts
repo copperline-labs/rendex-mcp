@@ -7,7 +7,9 @@ import { prependHttps } from "./screenshot.js";
 export const EXTRACT_TOOL_NAME = "rendex_extract";
 
 export const EXTRACT_TOOL_DESCRIPTION =
-  "Extract clean reader-mode content from any webpage as Markdown, JSON, or HTML. " +
+  "Use this when the user asks to read, extract, get the text/content/article of, or summarize a " +
+  "webpage/URL. Do NOT use for a visual screenshot (use rendex_screenshot). " +
+  "Extracts clean reader-mode content from any webpage as Markdown, JSON, or HTML. " +
   "Runs the same Chromium render pass as a screenshot, so it captures content after " +
   "JavaScript runs — handles SPAs that fetch-only readers miss. Strips nav, ads, and " +
   "boilerplate, returning the article body plus title, byline, and excerpt. " +
