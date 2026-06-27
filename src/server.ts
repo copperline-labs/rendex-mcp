@@ -76,11 +76,16 @@ export function createRendexServer(
   // MCP SDK forwards only `_meta` (unknown top-level tool fields are dropped from
   // tools/list), so the declaration lives under _meta — the documented location
   // OpenAI reads — merged with the widget template for visual tools.
-  const oauthSchemes = [{ type: "oauth2", scopes: ["rendex"] }];
+  // Declare BOTH noauth + oauth2: ChatGPT may call anonymously (and gets the
+  // in-band login challenge, which oauth2 then satisfies). Declaring oauth2 ALONE
+  // makes OpenAI classify every tool as an "OAuth-only action" and reject a
+  // No-Auth draft — this is the documented "anonymous calls, linking unlocks
+  // privileged behavior" shape.
+  const authSchemes = [{ type: "noauth" }, { type: "oauth2", scopes: ["rendex"] }];
   const widgetMeta = opts.widgets
-    ? { _meta: { "openai/outputTemplate": WIDGET_URI, securitySchemes: oauthSchemes } }
+    ? { _meta: { "openai/outputTemplate": WIDGET_URI, securitySchemes: authSchemes } }
     : {};
-  const oauthMeta = opts.widgets ? { _meta: { securitySchemes: oauthSchemes } } : {};
+  const oauthMeta = opts.widgets ? { _meta: { securitySchemes: authSchemes } } : {};
   // authChallenge — when the caller has NO Rendex identity (no rdx_ key, no OAuth
   // token), every tool short-circuits to the in-band _meta["mcp/www_authenticate"]
   // error ChatGPT reads to open the login (the protected-resource-metadata URL).
