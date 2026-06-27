@@ -42,8 +42,6 @@ const provider = new OAuthProvider<Env>({
 // that stalls in the apps-manage popup handshake. `tools/call` is deliberately
 // NOT here: every real invocation still 401s and bills via OAuth (or the static
 // rdx_ fast path), so per-caller billing is unchanged.
-const PUBLIC_DISCOVERY_METHODS = new Set(["initialize", "notifications/initialized", "ping", "tools/list"]);
-
 /** Peek the JSON-RPC method of a single request without consuming the body. */
 async function peekRpcMethod(request: Request): Promise<string | null> {
   try {
@@ -116,20 +114,22 @@ export default {
       }
       if (request.method === "POST") {
         const method = await peekRpcMethod(request);
-        // Public discovery fast path: answer initialize/tools/list/ping keyless so
-        // a directory scanner can read the toolset without the OAuth dance. The
-        // empty key is never used (no tool handler runs for discovery methods).
-        if (method && PUBLIC_DISCOVERY_METHODS.has(method)) {
+        if (method === "tools/call") {
+          // Tool INVOCATION is the only method that needs a Rendex identity.
+          // Unauthenticated → return the in-band `_meta["mcp/www_authenticate"]`
+          // challenge ChatGPT reads to open the per-user login. A call bearing an
+          // OAuth token falls through to the provider → validated → apiHandler.
+          if (!auth) {
+            return runMcp(request, "", env.RENDEX_API_URL, {
+              authChallenge: `${url.origin}/.well-known/oauth-protected-resource`,
+            });
+          }
+        } else if (method) {
+          // Every other JSON-RPC method is no-secret protocol/discovery
+          // (initialize, tools/list, resources/*, prompts/*, ping, notifications…)
+          // → answer keyless so directory scanners enumerate the full surface
+          // without OAuth. The empty key is never used (no tool handler runs).
           return runMcp(request, "", env.RENDEX_API_URL);
-        }
-        // Unauthenticated tool call (no rdx_ key AND no OAuth token): return the
-        // in-band `_meta["mcp/www_authenticate"]` challenge ChatGPT reads to open
-        // the per-user login. A call bearing an OAuth token instead falls through
-        // to the provider, which validates it and routes to the apiHandler.
-        if (method === "tools/call" && !auth) {
-          return runMcp(request, "", env.RENDEX_API_URL, {
-            authChallenge: `${url.origin}/.well-known/oauth-protected-resource`,
-          });
         }
       }
     }
