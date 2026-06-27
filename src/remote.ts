@@ -44,19 +44,19 @@ const provider = new OAuthProvider<Env>({
 // rdx_ fast path), so per-caller billing is unchanged.
 const PUBLIC_DISCOVERY_METHODS = new Set(["initialize", "notifications/initialized", "ping", "tools/list"]);
 
-/** True only for a single JSON-RPC request whose method is public discovery. */
-async function isPublicDiscovery(request: Request): Promise<boolean> {
+/** Peek the JSON-RPC method of a single request without consuming the body. */
+async function peekRpcMethod(request: Request): Promise<string | null> {
   try {
     // Read a CLONE so the original body stays intact for the transport.
     const body = (await request.clone().json()) as unknown;
     if (body && typeof body === "object" && !Array.isArray(body)) {
       const method = (body as { method?: unknown }).method;
-      return typeof method === "string" && PUBLIC_DISCOVERY_METHODS.has(method);
+      if (typeof method === "string") return method;
     }
   } catch {
     // Non-JSON / batched / unreadable → fall through to the OAuth provider.
   }
-  return false;
+  return null;
 }
 
 // The OAuthProvider validates the bearer token on /mcp and rejects anything that
@@ -114,13 +114,23 @@ export default {
       if (/^Bearer\s+rdx_/.test(auth)) {
         return runMcp(request, auth.replace(/^Bearer\s+/, ""), env.RENDEX_API_URL);
       }
-      // Public discovery fast path: answer initialize/tools/list/ping keyless so a
-      // directory scanner can read the toolset without the OAuth dance. Runs only
-      // when there's no static rdx_ key above; tools/call is excluded, so it still
-      // reaches the provider and 401s → OAuth at call time. The empty key is never
-      // used (no tool handler runs for discovery methods).
-      if (request.method === "POST" && (await isPublicDiscovery(request))) {
-        return runMcp(request, "", env.RENDEX_API_URL);
+      if (request.method === "POST") {
+        const method = await peekRpcMethod(request);
+        // Public discovery fast path: answer initialize/tools/list/ping keyless so
+        // a directory scanner can read the toolset without the OAuth dance. The
+        // empty key is never used (no tool handler runs for discovery methods).
+        if (method && PUBLIC_DISCOVERY_METHODS.has(method)) {
+          return runMcp(request, "", env.RENDEX_API_URL);
+        }
+        // Unauthenticated tool call (no rdx_ key AND no OAuth token): return the
+        // in-band `_meta["mcp/www_authenticate"]` challenge ChatGPT reads to open
+        // the per-user login. A call bearing an OAuth token instead falls through
+        // to the provider, which validates it and routes to the apiHandler.
+        if (method === "tools/call" && !auth) {
+          return runMcp(request, "", env.RENDEX_API_URL, {
+            authChallenge: `${url.origin}/.well-known/oauth-protected-resource`,
+          });
+        }
       }
     }
     return provider.fetch(request, env, ctx);

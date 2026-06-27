@@ -63,7 +63,7 @@ const VERSION = "1.5.1";
 export function createRendexServer(
   apiKey: string,
   baseUrl?: string,
-  opts: { widgets?: boolean } = {}
+  opts: { widgets?: boolean; authChallenge?: string } = {}
 ) {
   const client = new RendexClient(apiKey, baseUrl);
 
@@ -71,7 +71,32 @@ export function createRendexServer(
   // render-preview widget resource (registered below). Other clients ignore this
   // _meta key; only set it on remote transports (opts.widgets). The matching
   // handlers also switch to hosted URLs + structuredContent when widgets is on.
-  const widgetMeta = opts.widgets ? { _meta: { "openai/outputTemplate": WIDGET_URI } } : {};
+  // OpenAI Apps runtime auth (remote transport only). securitySchemes declares
+  // each tool needs a linked (oauth2) account so ChatGPT surfaces the login. The
+  // MCP SDK forwards only `_meta` (unknown top-level tool fields are dropped from
+  // tools/list), so the declaration lives under _meta — the documented location
+  // OpenAI reads — merged with the widget template for visual tools.
+  const oauthSchemes = [{ type: "oauth2", scopes: ["rendex"] }];
+  const widgetMeta = opts.widgets
+    ? { _meta: { "openai/outputTemplate": WIDGET_URI, securitySchemes: oauthSchemes } }
+    : {};
+  const oauthMeta = opts.widgets ? { _meta: { securitySchemes: oauthSchemes } } : {};
+  // authChallenge — when the caller has NO Rendex identity (no rdx_ key, no OAuth
+  // token), every tool short-circuits to the in-band _meta["mcp/www_authenticate"]
+  // error ChatGPT reads to open the login (the protected-resource-metadata URL).
+  const challenge = opts.authChallenge;
+  function guard<H extends (...args: never[]) => unknown>(handler: H): H {
+    if (!challenge) return handler;
+    return (async () => ({
+      content: [{ type: "text" as const, text: "Connect your Rendex account to use this tool." }],
+      _meta: {
+        "mcp/www_authenticate": [
+          `Bearer resource_metadata="${challenge}", error="insufficient_scope", error_description="Connect your Rendex account to continue"`,
+        ],
+      },
+      isError: true,
+    })) as unknown as H;
+  }
 
   const server = new McpServer(
     {
@@ -109,18 +134,19 @@ export function createRendexServer(
     inputSchema: ScreenshotInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     ...widgetMeta,
-  }, async (params) => {
+  }, guard(async (params) => {
     return handleScreenshot(client, params, opts.widgets);
-  });
+  }));
 
   server.registerTool(EXTRACT_TOOL_NAME, {
     title: "Extract Reader-Mode Content",
     description: EXTRACT_TOOL_DESCRIPTION,
     inputSchema: ExtractInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
-  }, async (params) => {
+    ...oauthMeta,
+  }, guard(async (params) => {
     return handleExtract(client, params);
-  });
+  }));
 
   server.registerTool(RENDER_LINK_NAME, {
     title: "Mint Hosted Render URL",
@@ -128,9 +154,9 @@ export function createRendexServer(
     inputSchema: RenderLinkInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     ...widgetMeta,
-  }, async (params) => {
+  }, guard(async (params) => {
     return handleRenderLink(client, params, opts.widgets);
-  });
+  }));
 
   // render_artifact: Markdown/HTML → branded PDF + PNG + hosted share page.
   // Read-only w.r.t. the caller's resources (mints hosted output, mutates
@@ -143,9 +169,9 @@ export function createRendexServer(
     // <img>/resource in caller HTML, so it does touch the open web.
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     ...widgetMeta,
-  }, async (params) => {
+  }, guard(async (params) => {
     return handleArtifact(client, params);
-  });
+  }));
 
   // rendex_account: read-only plan + usage + one-tap upgrade link. Touches only
   // the caller's own Rendex account (no external URLs); costs no credits.
@@ -154,9 +180,10 @@ export function createRendexServer(
     description: ACCOUNT_DESCRIPTION,
     inputSchema: AccountInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async () => {
+    ...oauthMeta,
+  }, guard(async () => {
     return handleAccount(client);
-  });
+  }));
 
   // ─── Rendex Watch ──
   server.registerTool(WATCH_CREATE_NAME, {
@@ -164,7 +191,8 @@ export function createRendexServer(
     description: WATCH_CREATE_DESCRIPTION,
     inputSchema: WatchCreateInputSchema.shape,
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
-  }, async (params) => handleWatchCreate(client, params));
+    ...oauthMeta,
+  }, guard(async (params) => handleWatchCreate(client, params)));
 
   server.registerTool(WATCH_TEST_NAME, {
     title: "Test Watch Config (dry-run)",
@@ -172,14 +200,15 @@ export function createRendexServer(
     inputSchema: WatchTestInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     ...widgetMeta,
-  }, async (params) => handleWatchTest(client, params, opts.widgets));
+  }, guard(async (params) => handleWatchTest(client, params, opts.widgets)));
 
   server.registerTool(WATCH_LIST_NAME, {
     title: "List Watches",
     description: WATCH_LIST_DESCRIPTION,
     inputSchema: WatchListInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (params) => handleWatchList(client, params));
+    ...oauthMeta,
+  }, guard(async (params) => handleWatchList(client, params)));
 
   server.registerTool(WATCH_GET_NAME, {
     title: "Get Watch",
@@ -187,14 +216,15 @@ export function createRendexServer(
     inputSchema: WatchGetInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     ...widgetMeta,
-  }, async (params) => handleWatchGet(client, params, opts.widgets));
+  }, guard(async (params) => handleWatchGet(client, params, opts.widgets)));
 
   server.registerTool(WATCH_RUN_NAME, {
     title: "Run Watch Now",
     description: WATCH_RUN_DESCRIPTION,
     inputSchema: WatchRunInputSchema.shape,
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
-  }, async (params) => handleWatchRun(client, params));
+    ...oauthMeta,
+  }, guard(async (params) => handleWatchRun(client, params)));
 
   server.registerTool(WATCH_RUNS_NAME, {
     title: "List Watch Runs",
@@ -202,21 +232,23 @@ export function createRendexServer(
     inputSchema: WatchRunsInputSchema.shape,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     ...widgetMeta,
-  }, async (params) => handleWatchRuns(client, params, opts.widgets));
+  }, guard(async (params) => handleWatchRuns(client, params, opts.widgets)));
 
   server.registerTool(WATCH_DELETE_NAME, {
     title: "Delete Watch",
     description: WATCH_DELETE_DESCRIPTION,
     inputSchema: WatchDeleteInputSchema.shape,
     annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
-  }, async (params) => handleWatchDelete(client, params));
+    ...oauthMeta,
+  }, guard(async (params) => handleWatchDelete(client, params)));
 
   server.registerTool(WATCH_UPDATE_NAME, {
     title: "Update Watch",
     description: WATCH_UPDATE_DESCRIPTION,
     inputSchema: WatchUpdateInputSchema.shape,
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (params) => handleWatchUpdate(client, params));
+    ...oauthMeta,
+  }, guard(async (params) => handleWatchUpdate(client, params)));
 
   // ─── ChatGPT Apps preview widget (remote transports only) ──────────
   // Served as a UI resource; render_artifact's _meta.openai/outputTemplate
