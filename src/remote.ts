@@ -78,6 +78,17 @@ export default {
       });
     }
 
+    // Some MCP clients probe the PATH-SCOPED authorization-server metadata
+    // (resource path appended) instead of the root well-known. The provider only
+    // serves the root path, so alias the /mcp-scoped URL to the canonical doc —
+    // closes a discovery divergence (a documented cause of connector-OAuth
+    // failures); harmless since root discovery already works.
+    if (url.pathname === "/.well-known/oauth-authorization-server/mcp") {
+      const canonical = new URL(request.url);
+      canonical.pathname = "/.well-known/oauth-authorization-server";
+      return provider.fetch(new Request(canonical.toString(), request), env, ctx);
+    }
+
     if (url.pathname === "/mcp") {
       const accept = request.headers.get("accept") ?? "";
       if (request.method === "GET") {
