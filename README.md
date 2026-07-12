@@ -243,7 +243,7 @@ Set the `RENDEX_API_KEY` environment variable in your MCP client configuration.
 
 | Plan | Calls/Month | Rate |
 |------|------------|------|
-| Free | 500 | 10/min |
+| Free | 100 | 10/min |
 | Starter | 10,000 | 60/min |
 | Pro | 100,000 | 300/min |
 | Enterprise | Custom | 1,000/min |
