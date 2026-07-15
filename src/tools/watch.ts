@@ -75,10 +75,10 @@ const CreateWatchFields = {
   name: z.string().max(120).optional().describe("Optional label for the watch."),
   intervalMinutes: z.number().int().min(5).max(43_200).default(1440)
     .describe("Check frequency in minutes. Minimum is your plan's floor — Free 1440 (daily), Starter 180, Pro 30, Enterprise 5."),
-  diffMode: z.enum(["visual", "text", "both"]).default("visual")
-    .describe("visual = pixel diff + highlighted overlay; text = extracted-text diff; both runs each."),
+  diffMode: z.enum(["visual", "text", "both"]).default("both")
+    .describe("How changes are detected. Default 'both' = a pixel diff (with a highlighted overlay) AND a FULL-PAGE text diff, alerting on either — catches any change, visual or text. 'visual' or 'text' narrow to one signal only."),
   threshold: z.number().min(0).max(1).default(0.01)
-    .describe("Visual-change noise floor as a 0..1 fraction; the diff must EXCEED it to count as changed."),
+    .describe("Visual sensitivity (0..1). Low (default 0.01) alerts on ANY change, including a small one on a long page (a changed-region test, not a whole-page pixel ratio). 0.06+ = only MAJOR visual changes (whole-page ratio). Text detection is unaffected."),
   renderParams: RenderParamsSchema.optional(),
   aiSummary: z.boolean().default(false).describe("Pro+ — attach an AI 'what changed' summary (roadmap)."),
   webhookUrl: z.preprocess(prependHttps, z.string().url()).optional().describe("Starter+ — HMAC-signed change-webhook target."),
