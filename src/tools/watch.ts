@@ -266,6 +266,9 @@ export async function handleWatchRuns(client: RendexClient, params: WatchRunsInp
     const latest = result.items[0];
     if (preview && latest) {
       const images = [
+        // Lead with the crop-to-change ("what changed") so an agent sees the actual
+        // change first, not the top of a tall page.
+        { label: "What changed", url: latest.cropUrl },
         { label: "Before", url: latest.beforeUrl },
         { label: "After", url: latest.afterUrl },
         { label: "Overlay (diff)", url: latest.diffOverlayUrl },
@@ -276,7 +279,7 @@ export async function handleWatchRuns(client: RendexClient, params: WatchRunsInp
           structuredContent: asStructured({
             title: `Latest run · watch ${id}`,
             images,
-            openUrl: latest.afterUrl ?? latest.beforeUrl ?? undefined,
+            openUrl: latest.cropUrl ?? latest.afterUrl ?? latest.beforeUrl ?? undefined,
             note:
               latest.changed === true
                 ? "Change detected since the previous check."
