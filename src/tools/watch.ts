@@ -282,7 +282,7 @@ export async function handleWatchRuns(client: RendexClient, params: WatchRunsInp
             openUrl: latest.cropUrl ?? latest.afterUrl ?? latest.beforeUrl ?? undefined,
             note:
               latest.changed === true
-                ? "Change detected since the previous check."
+                ? latest.aiSummary ?? "Change detected since the previous check."
                 : latest.changed === false
                   ? "No change since the previous check."
                   : `Status: ${latest.status}.`,

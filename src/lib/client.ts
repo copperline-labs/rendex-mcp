@@ -246,6 +246,7 @@ export interface WatchRun {
   diffOverlayUrl: string | null;
   cropUrl: string | null;
   changedRegion: { x: number; y: number; width: number; height: number } | null;
+  aiSummary: string | null;
   textDiff: { added?: string[]; removed?: string[]; summary?: string } | null;
   creditsCharged: number;
   error: string | null;
