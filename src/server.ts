@@ -58,7 +58,7 @@ import {
   handleWatchUpdate,
 } from "./tools/index.js";
 
-const VERSION = "1.5.1";
+const VERSION = "1.8.0";
 
 export function createRendexServer(
   apiKey: string,

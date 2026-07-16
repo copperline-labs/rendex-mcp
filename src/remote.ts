@@ -20,7 +20,7 @@ import type { Env } from "./oauth/props.js";
 // Channel version marker — kept in lockstep with server.ts / server.json /
 // package.json by scripts/bump-version.sh (and enforced by the preflight
 // version-consistency gate, which requires this literal in remote.ts).
-export const VERSION = "1.5.1";
+export const VERSION = "1.8.0";
 
 const provider = new OAuthProvider<Env>({
   apiRoute: "/mcp",
