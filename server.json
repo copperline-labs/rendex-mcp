@@ -3,7 +3,7 @@
   "name": "io.github.copperline-labs/rendex-mcp",
   "title": "Rendex: Rendering API for Images, PDFs & Content Extraction",
   "description": "Render HTML, Markdown, or URLs to images, PDF, or branded artifacts; extract and watch pages.",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "websiteUrl": "https://rendex.dev",
   "repository": {
     "url": "https://github.com/copperline-labs/rendex-mcp",
@@ -27,7 +27,7 @@
     {
       "registryType": "npm",
       "identifier": "@copperline/rendex-mcp",
-      "version": "1.8.0",
+      "version": "1.8.1",
       "transport": {
         "type": "stdio"
       },

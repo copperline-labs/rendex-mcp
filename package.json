@@ -1,7 +1,7 @@
 {
   "name": "@copperline/rendex-mcp",
   "mcpName": "io.github.copperline-labs/rendex-mcp",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "MCP server for Rendex: render HTML, Markdown, or URLs to images or PDF, apply Mustache data templating, and extract clean reader-mode content, all from AI agents",
   "type": "module",
   "bin": {
