@@ -7,8 +7,10 @@
 
 import { Unkey } from "@unkey/api";
 
+// Keep in sync with the shared PLAN_RATE_LIMITS / PLAN_LIMITS and the dashboard
+// PLAN_CONFIG — this sets the enforced identity rate limit for MCP-OAuth signups.
 const PLAN_RATE_LIMITS: Record<string, number> = {
-  free: 10,
+  free: 3,
   starter: 60,
   pro: 300,
   enterprise: 1000,
