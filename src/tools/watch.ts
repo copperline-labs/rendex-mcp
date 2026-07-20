@@ -80,7 +80,7 @@ const CreateWatchFields = {
   threshold: z.number().min(0).max(1).default(0.01)
     .describe("Visual sensitivity (0..1). Low (default 0.01) alerts on ANY change, including a small one on a long page (a changed-region test, not a whole-page pixel ratio). 0.06+ = only MAJOR visual changes (whole-page ratio). Text detection is unaffected."),
   renderParams: RenderParamsSchema.optional(),
-  aiSummary: z.boolean().default(false).describe("Pro+ — attach an AI 'what changed' summary (roadmap)."),
+  aiSummary: z.boolean().default(false).describe("Pro+ — attach a one-sentence AI 'what changed' summary to each detected change."),
   webhookUrl: z.preprocess(prependHttps, z.string().url()).optional().describe("Starter+ — HMAC-signed change-webhook target."),
   notifyEmail: z.string().email().optional()
     .describe("Any plan — send change alerts here. Must be your OWN account email (others are rejected). Defaults to it if omitted."),
@@ -167,7 +167,7 @@ export const WatchUpdateInputSchema = z
     threshold: z.number().min(0).max(1).optional().describe("Change the visual-change noise floor (0..1)."),
     renderParams: RenderParamsSchema.partial().optional()
       .describe("Render knobs to deep-merge over the existing capture config."),
-    aiSummary: z.boolean().optional().describe("Pro+ — toggle the AI 'what changed' summary (roadmap)."),
+    aiSummary: z.boolean().optional().describe("Pro+ — toggle the one-sentence AI 'what changed' summary on each detected change."),
     webhookUrl: z.preprocess(prependHttps, z.string().url()).nullable().optional()
       .describe("Starter+ — set or replace the change-webhook target; null to turn it off."),
     notifyEmail: z.string().email().nullable().optional()
