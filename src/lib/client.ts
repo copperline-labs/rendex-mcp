@@ -283,7 +283,7 @@ export interface WatchRunList {
 }
 
 export interface AccountResult {
-  plan: "free" | "starter" | "pro" | "enterprise";
+  plan: "free" | "basic" | "starter" | "pro" | "enterprise";
   usage: {
     used: number | null;
     limit: number | null;
