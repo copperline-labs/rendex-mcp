@@ -11,6 +11,7 @@ import { Unkey } from "@unkey/api";
 // PLAN_CONFIG — this sets the enforced identity rate limit for MCP-OAuth signups.
 const PLAN_RATE_LIMITS: Record<string, number> = {
   free: 3,
+  basic: 20,
   starter: 60,
   pro: 300,
   enterprise: 1000,
