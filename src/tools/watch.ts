@@ -74,7 +74,7 @@ const CreateWatchFields = {
   url: z.preprocess(prependHttps, z.string().url()).describe("The page to monitor (a schemeless host like 'rendex.dev/pricing' is upgraded to https)."),
   name: z.string().max(120).optional().describe("Optional label for the watch."),
   intervalMinutes: z.number().int().min(5).max(43_200).default(1440)
-    .describe("Check frequency in minutes. Minimum is your plan's floor — Free 1440 (daily), Basic 180, Starter 180, Pro 30, Enterprise 5."),
+    .describe("Check frequency in minutes. Minimum is your plan's floor — Free 1440 (daily), Basic 180, Starter 60, Pro 30, Enterprise 5."),
   diffMode: z.enum(["visual", "text", "both"]).default("both")
     .describe("How changes are detected. Default 'both' = a pixel diff (with a highlighted overlay) AND a FULL-PAGE text diff, alerting on either — catches any change, visual or text. 'visual' or 'text' narrow to one signal only."),
   threshold: z.number().min(0).max(1).default(0.01)
