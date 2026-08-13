@@ -204,7 +204,7 @@ Monitor a URL on a schedule and get notified when it changes — real-Chrome **v
 | `watch_update` | Edit a watch in place — interval, diff mode, channels, render params | `id`, plus any `watch_create` field; `webhookUrl`/`notifyEmail` accept `null` to clear a channel |
 | `watch_delete` | Delete a watch + its runs | `id` |
 
-`renderParams` carries the per-check capture knobs (`fullPage` defaults to **true**, `selector`, `device`, `geo` (Pro+), plus noise controls `ignoreRegions`/`ignoreText`/`minTextChars`/`suppressWhilePresent` and `uaMode`). Interval floors are per-plan (Free 1440 / Starter 180 / Pro 30 / Enterprise 5). Watch metadata + signed image URLs are returned as JSON text.
+`renderParams` carries the per-check capture knobs (`fullPage` defaults to **true**, `selector`, `device`, `geo` (Pro+), plus noise controls `ignoreRegions`/`ignoreText`/`minTextChars`/`suppressWhilePresent` and `uaMode`). Interval floors are per-plan (Free 1440 / Basic 180 / Starter 60 / Pro 30 / Enterprise 5). Watch metadata + signed image URLs are returned as JSON text.
 
 ### `rendex_account`
 
