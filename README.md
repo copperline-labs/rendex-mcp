@@ -121,7 +121,7 @@ Render any webpage, raw HTML, or Markdown to an image or PDF.
 | `geoCity` | string | — | City for geo-targeting (requires `geo`) |
 | `geoState` | string | — | State for geo-targeting (requires `geo`) |
 | `async` | boolean | — | Process asynchronously (returns job ID) |
-| `webhookUrl` | string | — | URL to receive callback when async capture completes |
+| `webhookUrl` | string | — | URL to receive callback when async capture completes (Starter+; Free/Basic poll job status) |
 | `cacheTtl` | number | — | Seconds to cache result (3600-2592000) |
 
 ### `rendex_extract`
