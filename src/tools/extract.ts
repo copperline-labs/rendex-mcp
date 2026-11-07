@@ -10,8 +10,8 @@ export const EXTRACT_TOOL_DESCRIPTION =
   "Use this when the user asks to read, extract, get the text/content/article of, or summarize a " +
   "webpage/URL. " +
   "Extracts clean reader-mode content from any webpage as Markdown, JSON, or HTML. " +
-  "Runs the same Chromium render pass as a screenshot, so it captures content after " +
-  "JavaScript runs — handles SPAs that fetch-only readers miss. Strips nav, ads, and " +
+  "Runs a full Chromium render pass, so it captures content after " +
+  "JavaScript runs, including single-page apps (SPAs). Strips nav, ads, and " +
   "boilerplate, returning the article body plus title, byline, and excerpt. " +
   "Great for feeding page content to an LLM, summarization, or RAG ingestion. " +
   "Costs 1 render credit per call.";
