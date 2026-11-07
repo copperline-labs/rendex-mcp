@@ -40,7 +40,14 @@ function consentCsp(_formActionOrigin?: string, nonce?: string): string {
 // Abuse controls mirroring the dashboard's send-otp gate (app-layer, on top of
 // Supabase's global email cap). Soft caps via OAUTH_KV counters — the Supabase
 // rate limit is the hard backstop.
-const OTP_SENDS_PER_IP_PER_HOUR = 5;
+// Per-/64 hourly OTP-send cap. Kept generous because this is an OAuth CONNECTOR:
+// a single user fumbling a connect/reconnect sends several codes, and reviewers
+// (OpenAI/Anthropic/Cursor) connect from a SHARED egress IP across multiple people
+// + retries — a tight cap here silently blocks a legitimate review ("Too many code
+// requests from your network"). Email-bombing is separately bounded by the 60s
+// per-email cooldown + MAX_SENDS_PER_LOGIN, and Supabase's global OTP cap is the
+// hard backstop, so this is a soft anti-nuisance limit, not the primary control.
+const OTP_SENDS_PER_IP_PER_HOUR = 30;
 const OTP_IP_WINDOW_SECONDS = 3600;
 const OTP_EMAIL_COOLDOWN_SECONDS = 60;
 const MAX_SENDS_PER_LOGIN = 3; // one GET/cookie can't fan out to many addresses
