@@ -12,7 +12,6 @@ export const ARTIFACT_NAME = "render_artifact";
 export const ARTIFACT_DESCRIPTION =
   "Use this when the user asks to make or create a branded report, invoice, summary, release notes, " +
   "or document — or to 'turn this Markdown/HTML into a PDF and PNG' (optionally with a logo or accent color). " +
-  "Do NOT use to screenshot an existing URL (use rendex_screenshot). " +
   "Turns Markdown or HTML into a branded, downloadable artifact — a PDF, a PNG, and a hosted share page — in one call. " +
   "Apply a logo, accentColor, font, header, and footer. Returns hosted URLs { pdfUrl, pngUrl, shareUrl, expiresAt }. " +
   "Each requested format costs 1 render credit.";

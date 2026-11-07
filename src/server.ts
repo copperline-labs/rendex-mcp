@@ -125,9 +125,14 @@ export function createRendexServer(
   );
 
   // ─── Tool annotations (MCP spec hints for agent clients) ──────────────
-  // readOnlyHint    — does NOT mutate the caller's own resources (a render
-  //                   reads a page; a watch_create writes a watch).
-  // destructiveHint — irreversible data loss (only watch_delete).
+  // readOnlyHint    — produces NO user-visible side effect: it only reads/returns
+  //                   data. A tool that MINTS a persistent hosted artifact
+  //                   (render_link's signed URL, render_artifact's PDF/PNG/share
+  //                   page) is NOT read-only even though it doesn't mutate the
+  //                   caller's stored resources — the hosted output is the side
+  //                   effect (OpenAI Apps review flags readOnly=true here).
+  // destructiveHint — causes material loss or a hard-to-reverse change (deleting
+  //                   a watch, or editing one in place / clearing its channels).
   // idempotentHint  — repeating with the same args has no additional effect.
   // openWorldHint   — touches arbitrary external URLs (the open web) vs only
   //                   the caller's own Rendex resources.
@@ -154,26 +159,28 @@ export function createRendexServer(
     return handleExtract(client, params);
   }));
 
+  // readOnly=false: mints a NEW signed, hosted, edge-cached image URL — a
+  // persistent, user-visible artifact, not a pure read.
   server.registerTool(RENDER_LINK_NAME, {
     title: "Mint Hosted Render URL",
     description: RENDER_LINK_DESCRIPTION,
     inputSchema: RenderLinkInputSchema.shape,
-    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     ...widgetMeta,
   }, guard(async (params) => {
     return handleRenderLink(client, params, opts.widgets);
   }));
 
   // render_artifact: Markdown/HTML → branded PDF + PNG + hosted share page.
-  // Read-only w.r.t. the caller's resources (mints hosted output, mutates
-  // nothing); does not touch arbitrary external URLs (inline content only).
+  // readOnly=false: it GENERATES and hosts new files + a share page — a
+  // user-visible side effect — even though it mutates no stored caller resource.
   server.registerTool(ARTIFACT_NAME, {
     title: "Render Branded Artifact (PDF + PNG)",
     description: ARTIFACT_DESCRIPTION,
     inputSchema: ArtifactInputSchema.shape,
     // openWorld: the composed page can fetch an external branding.logo + any
     // <img>/resource in caller HTML, so it does touch the open web.
-    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     ...widgetMeta,
   }, guard(async (params) => {
     return handleArtifact(client, params);
@@ -248,11 +255,14 @@ export function createRendexServer(
     ...oauthMeta,
   }, guard(async (params) => handleWatchDelete(client, params)));
 
+  // destructive=true: an in-place edit can re-point the url or turn OFF a
+  // notification channel (webhookUrl/notifyEmail=null), overwriting the prior
+  // config — a material, not-auto-reversible change.
   server.registerTool(WATCH_UPDATE_NAME, {
     title: "Update Watch",
     description: WATCH_UPDATE_DESCRIPTION,
     inputSchema: WatchUpdateInputSchema.shape,
-    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     ...oauthMeta,
   }, guard(async (params) => handleWatchUpdate(client, params)));
 

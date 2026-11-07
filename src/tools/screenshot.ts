@@ -18,8 +18,7 @@ export const TOOL_NAME = "rendex_screenshot";
 
 export const TOOL_DESCRIPTION =
   "Use this when the user asks to screenshot, capture, or take a picture of a webpage/URL, or to " +
-  "render raw HTML or Markdown to an image or PDF. Do NOT use to get a reusable hosted image URL " +
-  "(use rendex_render_link) or to make a branded multi-format document (use render_artifact). " +
+  "render raw HTML or Markdown to an image or PDF. " +
   "Captures a screenshot or PDF of any webpage, raw HTML, or Markdown. " +
   "Supports full-page capture, dark mode, ad blocking, custom viewports, " +
   "CSS/JS injection, cookie/header injection, PDF output, HTML and Markdown rendering, " +
@@ -425,8 +424,7 @@ export const RENDER_LINK_NAME = "rendex_render_link";
 
 export const RENDER_LINK_DESCRIPTION =
   "Use this when the user wants a reusable, HOSTED image URL — an og:image or a link to embed in " +
-  "an <img> tag — rather than the image bytes. Do NOT use for a one-off inline screenshot (use " +
-  "rendex_screenshot). " +
+  "an <img> tag — rather than the image bytes. " +
   "Renders a URL, raw HTML, or Markdown and gives back a signed, hosted, edge-cached image URL " +
   "instead of the bytes — ideal for dynamic OG images: drop the URL into " +
   '<meta property="og:image"> or an <img> tag and Rendex serves a cached copy on every share. ' +
