@@ -21,14 +21,20 @@ const LOGIN_TTL_SECONDS = 600;
 const STATE_COOKIE = "__Host-rx_login";
 // The consent form posts to /authorize, and the server then 302-redirects to
 // the OAuth client's redirect_uri. CSP form-action governs that ENTIRE chain
-// (including the redirect), so the client's origin must be allowed or the
-// browser silently blocks the post-login redirect and the flow dies. Widen
-// form-action to 'self' + the specific client redirect origin.
-function consentCsp(formActionOrigin?: string, nonce?: string): string {
-  const formAction = formActionOrigin ? `'self' ${formActionOrigin}` : "'self'";
+// (including every redirect hop), so EVERY origin in the post-login chain must be
+// allowed or the browser silently blocks the handoff and the flow hangs on
+// "Connecting". Pinning it to the single redirect_uri origin is not enough:
+// OpenAI's connector OAuth (and others) bounce through MULTIPLE origins after
+// /authorize (chatgpt.com → platform.openai.com → …), and any un-listed hop is
+// blocked (confirmed: "form-action 'self' https://chatgpt.com … request blocked").
+// Allow any https form target; the real security control is the OAuthProvider's
+// redirect_uri validation, and this page has no injection surface (server-rendered,
+// fully escaped, nonce-gated script). The _formActionOrigin arg is kept for
+// call-site compatibility but is intentionally no longer pinned.
+function consentCsp(_formActionOrigin?: string, nonce?: string): string {
   // Only the per-request nonce'd loading script may run — no 'unsafe-inline'.
   const scriptSrc = nonce ? ` script-src 'nonce-${nonce}';` : "";
-  return `default-src 'none'; style-src 'unsafe-inline';${scriptSrc} img-src https: data:; form-action ${formAction}; base-uri 'none'; frame-ancestors 'none'`;
+  return `default-src 'none'; style-src 'unsafe-inline';${scriptSrc} img-src https: data:; form-action 'self' https:; base-uri 'none'; frame-ancestors 'none'`;
 }
 
 // Abuse controls mirroring the dashboard's send-otp gate (app-layer, on top of
