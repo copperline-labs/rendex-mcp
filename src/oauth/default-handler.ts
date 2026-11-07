@@ -214,8 +214,14 @@ async function handleAuthorizePost(request: Request, env: Env): Promise<Response
       return htmlResponse(renderErrorPage("Too many code requests. Start again from your client."));
     }
     // Per-IP hourly cap (soft; Supabase's global email cap is the hard backstop).
+    // READ the counter to decide — do NOT bump here: a bump-then-check would count
+    // every BLOCKED retry too, so hammering "Send code" kept inflating the window
+    // and extended the lockout. Only increment once a code actually goes out (below),
+    // so blocked/cooldown/failed attempts never cost a slot.
     const ip = clientIp(request);
-    if ((await bumpCounter(env, `rxotp:ip:${ip}`, OTP_IP_WINDOW_SECONDS)) > OTP_SENDS_PER_IP_PER_HOUR) {
+    const ipKey = `rxotp:ip:${ip}`;
+    const ipCount = parseInt((await env.OAUTH_KV.get(ipKey)) ?? "0", 10) || 0;
+    if (ipCount >= OTP_SENDS_PER_IP_PER_HOUR) {
       return emailForm("Too many code requests from your network. Try again later.");
     }
     // Per-email cooldown.
@@ -227,6 +233,9 @@ async function handleAuthorizePost(request: Request, env: Env): Promise<Response
 
     const sent = await sendLoginCode(env, email);
     if (!sent.ok) return emailForm(sent.error ?? "Could not send a code. Try again.");
+
+    // Count the send only now that it actually went out (anchors the hourly window).
+    await bumpCounter(env, ipKey, OTP_IP_WINDOW_SECONDS);
 
     await saveState(env, stateId, { ...state, email, sendCount: (state.sendCount ?? 0) + 1 });
     // saveState only persists to KV; the codeForm closure reads the in-memory
