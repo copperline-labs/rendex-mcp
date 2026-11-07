@@ -33,6 +33,17 @@ const provider = new OAuthProvider<Env>({
   // OAuth 2.1: only S256 PKCE (no plain), no implicit flow.
   allowImplicitFlow: false,
   allowPlainPKCE: false,
+  // Keep DCR client registrations effectively permanent. workers-oauth-provider
+  // defaults clientRegistrationTTL to 90 days (DEFAULT_CLIENT_REGISTRATION_TTL =
+  // 2160h) and getClient() is READ-ONLY (no sliding refresh), so every connector's
+  // client_id otherwise expires 90 days after it first connects → the next silent
+  // token refresh fails with `401 invalid_client - Client not found` and the user
+  // must delete-and-re-add the connector (Reconnect reuses the dead id). That is
+  // wrong for a first-class persistent connector (ChatGPT App / Claude Connector /
+  // Cursor). Pin to 10 years so real connections never break; abandoned DCR records
+  // still GC eventually. See GH #224. (Takes effect for NEW registrations; clients
+  // registered before this deploy keep their original 90-day TTL until re-added.)
+  clientRegistrationTTL: 10 * 365 * 24 * 60 * 60,
 });
 
 // JSON-RPC methods that carry no secrets and never call the Rendex API, so they
