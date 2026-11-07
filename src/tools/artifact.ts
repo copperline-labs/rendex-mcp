@@ -92,6 +92,12 @@ export async function handleArtifact(client: RendexClient, params: ArtifactInput
       structuredContent: {
         ...result,
         title: header ?? "Branded artifact",
+        // Show the branded PNG INLINE in the ChatGPT widget (not just a download
+        // button) — matching rendex_screenshot/render_link. The widget renders its
+        // preview from `imageUrl`; `result` only carries `pngUrl` (wired to the
+        // Download button), so map it across. When only a PDF was requested there is
+        // no PNG to preview → undefined → the widget shows buttons only.
+        imageUrl: result.pngUrl,
         note:
           result.pdfUrl && result.pngUrl
             ? "Branded PDF + PNG with a hosted share page."
